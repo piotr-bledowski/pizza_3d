@@ -1,0 +1,12 @@
+*.slnx
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj.user.props
+*.vcxproj.user.targets
+*.vcxproj.user.props
+pizza_opengl/
+x64/
+.vs/
+.vscode/
