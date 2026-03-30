@@ -2,10 +2,14 @@
 #include <cmath>
 
 // Global parameters
+constexpr float PI = 3.14159265358979323846f;
+
+// Pizza parameters
 float g_radius = 2.5f;
 float g_height = 0.3f;
 int   g_segments = 32;
-constexpr float PI = 3.14159265358979323846f;
+float g_edgeRadius = 0.15f;   // size of rounded edge
+int   g_edgeSegments = 16;    // smoothness of rounding
 
 // Camera parameters
 float camX = 2.0f, camY = 2.0f, camZ = 5.0f;
@@ -42,34 +46,55 @@ void initGL() {
 // Utility: draw cylinder
 void drawCylinder(float radius, float height, int segments) {
     float halfH = height * 0.5f;
+    float innerR = radius - g_edgeRadius;
     float step = 2.0f * PI / segments;
 
-    glBegin(GL_QUAD_STRIP);
-    for (int i = 0; i <= segments; ++i) {
-        float theta = i * step;
-        float x = cos(theta) * radius;
-        float z = sin(theta) * radius;
-
-        glVertex3f(x, -halfH, z);
-        glVertex3f(x, halfH, z);
-    }
-    glEnd();
-
+    // ===== Flat top =====
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, halfH, 0.0f);
     for (int i = 0; i <= segments; ++i) {
         float theta = i * step;
-        glVertex3f(cos(theta) * radius, halfH, sin(theta) * radius);
+        glVertex3f(cos(theta) * innerR, halfH, sin(theta) * innerR);
     }
     glEnd();
 
+    // ===== Flat bottom =====
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, -halfH, 0.0f);
     for (int i = 0; i <= segments; ++i) {
         float theta = i * step;
-        glVertex3f(cos(theta) * radius, -halfH, sin(theta) * radius);
+        glVertex3f(cos(theta) * innerR, -halfH, sin(theta) * innerR);
     }
     glEnd();
+
+    // ===== Rounded edge (torus strip) =====
+    for (int j = 0; j < g_edgeSegments; ++j) {
+        float phi0 = (j / (float)g_edgeSegments) * PI - PI / 2.0f;
+        float phi1 = ((j + 1) / (float)g_edgeSegments) * PI - PI / 2.0f;
+
+        glBegin(GL_QUAD_STRIP);
+        for (int i = 0; i <= segments; ++i) {
+            float theta = i * step;
+
+            // Ring center
+            float cx = cos(theta) * innerR;
+            float cz = sin(theta) * innerR;
+
+            // First ring
+            float x0 = cx + cos(theta) * cos(phi0) * g_edgeRadius;
+            float y0 = sin(phi0) * g_edgeRadius;
+            float z0 = cz + sin(theta) * cos(phi0) * g_edgeRadius;
+
+            // Second ring
+            float x1 = cx + cos(theta) * cos(phi1) * g_edgeRadius;
+            float y1 = sin(phi1) * g_edgeRadius;
+            float z1 = cz + sin(theta) * cos(phi1) * g_edgeRadius;
+
+            glVertex3f(x0, y0, z0);
+            glVertex3f(x1, y1, z1);
+        }
+        glEnd();
+    }
 }
 
 // Camera update
