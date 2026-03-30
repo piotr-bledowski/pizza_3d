@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
     // Create objects using parameters
     g_cylinder = new Cylinder(g_radius, g_height, g_segments);
-    g_cube = new Cube(g_cubeSize);
+    //g_cube = new Cube(g_cubeSize);
 
     initGL();
 
