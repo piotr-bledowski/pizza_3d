@@ -9,11 +9,19 @@ constexpr float PI = 3.14159265358979323846f;
 
 // Camera parameters
 float camX = 2.0f, camY = 2.0f, camZ = 5.0f;
-float yaw = -90.0f;   // left/right
-float pitch = 0.0f;   // up/down
+float yaw = -90.0f;
+float pitch = 0.0f;
 
 float moveSpeed = 0.1f;
 float mouseSensitivity = 0.2f;
+
+// Key bindings
+unsigned char cameraKeyForward = 'w';
+unsigned char cameraKeyBackward = 's';
+unsigned char cameraKeyLeft = 'a';
+unsigned char cameraKeyRight = 'd';
+unsigned char cameraKeyUp = 'q';
+unsigned char cameraKeyDown = 'e';
 
 bool keys[256] = { false };
 int lastMouseX = 400, lastMouseY = 300;
@@ -36,7 +44,6 @@ void drawCylinder(float radius, float height, int segments) {
     float halfH = height * 0.5f;
     float step = 2.0f * PI / segments;
 
-    // Side surface
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= segments; ++i) {
         float theta = i * step;
@@ -48,7 +55,6 @@ void drawCylinder(float radius, float height, int segments) {
     }
     glEnd();
 
-    // Top cap
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, halfH, 0.0f);
     for (int i = 0; i <= segments; ++i) {
@@ -57,7 +63,6 @@ void drawCylinder(float radius, float height, int segments) {
     }
     glEnd();
 
-    // Bottom cap
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, -halfH, 0.0f);
     for (int i = 0; i <= segments; ++i) {
@@ -77,12 +82,12 @@ void updateCamera() {
     float dirZ = sin(radYaw) * cos(radPitch);
 
     // Forward / backward
-    if (keys['w']) {
+    if (keys[cameraKeyForward]) {
         camX += dirX * moveSpeed;
         camY += dirY * moveSpeed;
         camZ += dirZ * moveSpeed;
     }
-    if (keys['s']) {
+    if (keys[cameraKeyBackward]) {
         camX -= dirX * moveSpeed;
         camY -= dirY * moveSpeed;
         camZ -= dirZ * moveSpeed;
@@ -92,13 +97,21 @@ void updateCamera() {
     float rightX = -sin(radYaw);
     float rightZ = cos(radYaw);
 
-    if (keys['a']) {
+    if (keys[cameraKeyLeft]) {
         camX -= rightX * moveSpeed;
         camZ -= rightZ * moveSpeed;
     }
-    if (keys['d']) {
+    if (keys[cameraKeyRight]) {
         camX += rightX * moveSpeed;
         camZ += rightZ * moveSpeed;
+    }
+
+    // Vertical movement
+    if (keys[cameraKeyUp]) {
+        camY += moveSpeed;
+    }
+    if (keys[cameraKeyDown]) {
+        camY -= moveSpeed;
     }
 }
 
