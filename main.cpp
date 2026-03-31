@@ -4,6 +4,8 @@
 #include "Mesh/Cylinder.h"
 #include "Mesh/Cube.h"
 #include "Mesh/Cuboid.h"
+#include "Mesh/TriangularPrism.h"
+#include "Mesh/Cone.h"
 #include "Scene/SceneManager.h"
 #include "UI/UI.h"
 
@@ -16,7 +18,7 @@ float g_cuboidHeight = 0.2f;
 float g_cuboidDepth = 0.6f;
 
 SceneManager g_scene;
-int g_cuboidCount = 0;
+int g_prismCount = 0;
 
 static void buildUI()
 {
@@ -28,23 +30,23 @@ static void buildUI()
 
     drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
     drawText(0.02f, 0.055f, "Camera: WASD move, QE up/down, mouse look (cursor kept in window)", text);
-    drawText(0.02f, 0.09f, "UI: click Add / Remove cuboid", text);
+    drawText(0.02f, 0.09f, "UI: click Add / Remove prism", text);
 
-    if (drawButton(0.02f, 0.88f, 0.2f, 0.08f, "Add cuboid", label, bg, bt, border))
+    if (drawButton(0.02f, 0.88f, 0.2f, 0.08f, "Add prism", label, bg, bt, border))
     {
-        float yOffset = g_height * 0.5f + g_cuboidHeight + g_cuboidCount * g_cuboidHeight * 1.2f;
-        g_scene.addObject({new Cuboid(g_cuboidWidth, g_cuboidHeight, g_cuboidDepth),
+        float yOffset = g_height * 1.0f + g_cuboidHeight + g_prismCount * g_cuboidHeight * 1.2f;
+        g_scene.addObject({new TriangularPrism(g_cuboidWidth, g_cuboidHeight, g_cuboidDepth),
                            {0.0f, yOffset, 0.0f},
                            {45.0f, 45.0f, 0.0f}});
-        g_cuboidCount++;
+        g_prismCount++;
     }
 
-    if (drawButton(0.24f, 0.88f, 0.2f, 0.08f, "Remove cuboid", label, bg, bt, border))
+    if (drawButton(0.24f, 0.88f, 0.2f, 0.08f, "Remove prism", label, bg, bt, border))
     {
-        if (g_cuboidCount > 0)
+        if (g_prismCount > 0)
         {
             g_scene.removeLastObject();
-            g_cuboidCount--;
+            g_prismCount--;
         }
     }
 }
@@ -71,6 +73,7 @@ int main(int argc, char **argv)
     glutCreateWindow("OpenGL Scene");
 
     g_scene.addObject({new Cylinder(g_radius, g_height, g_segments), {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
+    g_scene.addObject({new Cone(0.35f, 0.5f, 24), {2.2f, 3.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
 
     initGL();
 
