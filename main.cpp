@@ -5,7 +5,7 @@
 #include "Input.h"
 #include "Mesh/Cylinder.h"
 #include "Mesh/Cube.h"
-#include "Math/Vec3.h"
+#include "Scene/SceneObject.h"
 
 // User-controlled parameters
 float g_radius = 2.5f;
@@ -21,19 +21,22 @@ int main(int argc, char** argv) {
     glutCreateWindow("OpenGL Scene");
 
     // Scene definition
-    std::vector<Mesh*> meshes;
-    std::vector<Vec3> positions;
+    std::vector<SceneObject> objects;
 
     // Cylinder
-    meshes.push_back(new Cylinder(g_radius, g_height, g_segments));
-    positions.push_back({ 0.0f, 0.0f, 0.0f });
+    objects.push_back({
+        new Cylinder(g_radius, g_height, g_segments),
+        {0.0f, 0.0f, 0.0f}
+        });
 
     // Cube above cylinder
-    meshes.push_back(new Cube(g_cubeSize));
-    positions.push_back({ 0.0f, g_height * 0.5f + g_cubeSize, 0.0f });
+    objects.push_back({
+        new Cube(g_cubeSize),
+        {0.0f, g_height * 0.5f + g_cubeSize, 0.0f}
+        });
 
     // Send to renderer
-    setScene(meshes, positions);
+    setScene(objects);
 
     initGL();
 

@@ -1,19 +1,15 @@
 #include "Renderer.h"
 #include "Camera.h"
+#include "Scene/SceneObject.h"
 #include "Mesh/Mesh.h"
-#include "Math/Vec3.h"
 #include <GL/freeglut.h>
 #include <vector>
 
 // Internal scene storage
-static std::vector<Mesh*> g_meshes;
-static std::vector<Vec3>  g_positions;
+static std::vector<SceneObject> g_objects;
 
-void setScene(const std::vector<Mesh*>& meshes,
-    const std::vector<Vec3>& positions)
-{
-    g_meshes = meshes;
-    g_positions = positions;
+void setScene(const std::vector<SceneObject>& objects) {
+    g_objects = objects;
 }
 
 void initGL() {
@@ -35,16 +31,15 @@ void renderScene() {
 
     applyCameraView();
 
-    // Render all meshes
-    for (size_t i = 0; i < g_meshes.size(); ++i) {
+    // Render all objects
+    for (const auto& obj : g_objects) {
+        if (!obj.mesh) continue;
+
         glPushMatrix();
 
-        if (i < g_positions.size()) {
-            const Vec3& p = g_positions[i];
-            glTranslatef(p.x, p.y, p.z);
-        }
+        glTranslatef(obj.position.x, obj.position.y, obj.position.z);
 
-        g_meshes[i]->draw();
+        obj.mesh->draw();
 
         glPopMatrix();
     }

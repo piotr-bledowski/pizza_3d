@@ -1,12 +1,10 @@
 #pragma once
 #include <vector>
 
-class Mesh;
-struct Vec3;
+struct SceneObject;
 
 void initGL();
 void renderScene();
 
 // Scene interface
-void setScene(const std::vector<Mesh*>& meshes,
-    const std::vector<Vec3>& positions);
+void setScene(const std::vector<SceneObject>& objects);
