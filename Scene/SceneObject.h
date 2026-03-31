@@ -3,7 +3,9 @@
 
 class Mesh;
 
-struct SceneObject {
-    Mesh* mesh;
+struct SceneObject
+{
+    Mesh *mesh;
     Vec3 position;
+    Vec3 rotation;
 };
