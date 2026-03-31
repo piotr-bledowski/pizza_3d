@@ -1,13 +1,20 @@
 #include "Renderer.h"
 #include "Camera.h"
-#include "Mesh/Cylinder.h"
-#include "Mesh/Cube.h"
+#include "Mesh/Mesh.h"
+#include "Math/Vec3.h"
 #include <GL/freeglut.h>
+#include <vector>
 
+// Internal scene storage
+static std::vector<Mesh*> g_meshes;
+static std::vector<Vec3>  g_positions;
 
-// Objects (assigned from main)
-Cylinder* g_cylinder = nullptr;
-Cube* g_cube = nullptr;
+void setScene(const std::vector<Mesh*>& meshes,
+    const std::vector<Vec3>& positions)
+{
+    g_meshes = meshes;
+    g_positions = positions;
+}
 
 void initGL() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -28,14 +35,17 @@ void renderScene() {
 
     applyCameraView();
 
-    // Draw cylinder at origin
-    if (g_cylinder) g_cylinder->draw();
-
-    // Draw cube above cylinder
-    if (g_cube) {
+    // Render all meshes
+    for (size_t i = 0; i < g_meshes.size(); ++i) {
         glPushMatrix();
-        glTranslatef(0.0f, g_cylinder->height * 0.5f + g_cube->size, 0.0f);
-        g_cube->draw();
+
+        if (i < g_positions.size()) {
+            const Vec3& p = g_positions[i];
+            glTranslatef(p.x, p.y, p.z);
+        }
+
+        g_meshes[i]->draw();
+
         glPopMatrix();
     }
 
