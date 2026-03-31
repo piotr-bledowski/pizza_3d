@@ -3,6 +3,7 @@
 #include "Scene/SceneObject.h"
 #include "Mesh/Mesh.h"
 #include "Texture/TextureManager.h"
+#include "UI/UI.h"
 #include <GL/freeglut.h>
 #include <vector>
 
@@ -50,6 +51,10 @@ void renderScene() {
 
         glPopMatrix();
     }
+
+    int winW = glutGet(GLUT_WINDOW_WIDTH);
+    int winH = glutGet(GLUT_WINDOW_HEIGHT);
+    uiRenderOverlay(winW, winH);
 
     glutSwapBuffers();
     glutPostRedisplay();
