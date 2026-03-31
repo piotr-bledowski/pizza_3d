@@ -3,6 +3,7 @@
 
 
 bool keys[256] = { false };
+static bool keysPressedOnce[256] = { false };
 
 int lastMouseX = 400, lastMouseY = 300;
 bool firstMouse = true;
@@ -39,4 +40,15 @@ void mouseMotion(int x, int y) {
 
     if (pitch > 89.0f) pitch = 89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
+}
+
+bool isKeyPressedOnce(unsigned char key) {
+    if (keys[key] && !keysPressedOnce[key]) {
+        keysPressedOnce[key] = true;
+        return true;
+    }
+    if (!keys[key]) {
+        keysPressedOnce[key] = false;
+    }
+    return false;
 }
