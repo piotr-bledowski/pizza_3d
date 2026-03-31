@@ -28,6 +28,8 @@ static void buildUI()
     Color4 border{0.45f, 0.5f, 0.55f, 1.0f};
     const float bt = 2.0f;
 
+	Vec3 prismRotations{ 45.0f, 45.0f, 0.0f };
+
     drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
     drawText(0.02f, 0.055f, "Camera: WASD move, QE up/down, mouse look (cursor kept in window)", text);
     drawText(0.02f, 0.09f, "UI: click Add / Remove prism", text);
@@ -37,7 +39,7 @@ static void buildUI()
         float yOffset = g_height * 1.0f + g_cuboidHeight + g_prismCount * g_cuboidHeight * 1.2f;
         g_scene.addObject({new TriangularPrism(g_cuboidWidth, g_cuboidHeight, g_cuboidDepth),
                            {0.0f, yOffset, 0.0f},
-                           {45.0f, 45.0f, 0.0f}});
+                           prismRotations});
         g_prismCount++;
     }
 
