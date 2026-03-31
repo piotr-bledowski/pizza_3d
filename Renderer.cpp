@@ -10,11 +10,13 @@
 // Internal scene storage
 static std::vector<SceneObject> g_objects;
 
-void setScene(const std::vector<SceneObject>& objects) {
+void setScene(const std::vector<SceneObject> &objects)
+{
     g_objects = objects;
 }
 
-void initGL() {
+void initGL()
+{
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
@@ -31,7 +33,8 @@ void initGL() {
     glEnable(GL_TEXTURE_2D);
 }
 
-void renderScene() {
+void renderScene()
+{
     updateCamera();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -40,12 +43,17 @@ void renderScene() {
     applyCameraView();
 
     // Render all objects
-    for (const auto& obj : g_objects) {
-        if (!obj.mesh) continue;
+    for (const auto &obj : g_objects)
+    {
+        if (!obj.mesh)
+            continue;
 
         glPushMatrix();
 
         glTranslatef(obj.position.x, obj.position.y, obj.position.z);
+        glRotatef(obj.rotation.x, 1.0f, 0.0f, 0.0f);
+        glRotatef(obj.rotation.y, 0.0f, 1.0f, 0.0f);
+        glRotatef(obj.rotation.z, 0.0f, 0.0f, 1.0f);
 
         obj.mesh->draw();
 

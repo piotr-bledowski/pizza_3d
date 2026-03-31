@@ -33,7 +33,9 @@ static void buildUI()
     if (drawButton(0.02f, 0.88f, 0.2f, 0.08f, "Add cuboid", label, bg, bt, border))
     {
         float yOffset = g_height * 0.5f + g_cuboidHeight + g_cuboidCount * g_cuboidHeight * 1.2f;
-        g_scene.addObject({new Cuboid(g_cuboidWidth, g_cuboidHeight, g_cuboidDepth), {0.0f, yOffset, 0.0f}});
+        g_scene.addObject({new Cuboid(g_cuboidWidth, g_cuboidHeight, g_cuboidDepth),
+                           {0.0f, yOffset, 0.0f},
+                           {45.0f, 45.0f, 0.0f}});
         g_cuboidCount++;
     }
 
@@ -68,7 +70,7 @@ int main(int argc, char **argv)
     glutInitWindowSize(800, 600);
     glutCreateWindow("OpenGL Scene");
 
-    g_scene.addObject({new Cylinder(g_radius, g_height, g_segments), {0.0f, 0.0f, 0.0f}});
+    g_scene.addObject({new Cylinder(g_radius, g_height, g_segments), {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
 
     initGL();
 
