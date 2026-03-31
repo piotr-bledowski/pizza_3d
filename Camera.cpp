@@ -22,6 +22,9 @@ unsigned char cameraKeyUp = 'q';
 unsigned char cameraKeyDown = 'e';
 
 void updateCamera() {
+    if (getControlMode() != ControlMode::Camera) {
+        return;
+    }
     float radYaw = yaw * PI / 180.0f;
     float radPitch = pitch * PI / 180.0f;
 
