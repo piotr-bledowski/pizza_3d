@@ -2,6 +2,7 @@
 #include "Camera.h"
 #include "Scene/SceneObject.h"
 #include "Mesh/Mesh.h"
+#include "Texture/TextureManager.h"
 #include <GL/freeglut.h>
 #include <vector>
 
@@ -21,6 +22,12 @@ void initGL() {
     gluPerspective(60.0, 800.0 / 600.0, 0.1, 100.0);
 
     glMatrixMode(GL_MODELVIEW);
+
+    // Initialize textures
+    TextureManager::initPizzaTexture();
+
+    // Enable texture mapping
+    glEnable(GL_TEXTURE_2D);
 }
 
 void renderScene() {
