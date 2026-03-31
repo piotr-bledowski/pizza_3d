@@ -1,13 +1,16 @@
 #include "Renderer.h"
 #include "Camera.h"
-#include "Mesh/Cylinder.h"
-#include "Mesh/Cube.h"
+#include "Scene/SceneObject.h"
+#include "Mesh/Mesh.h"
 #include <GL/freeglut.h>
+#include <vector>
 
+// Internal scene storage
+static std::vector<SceneObject> g_objects;
 
-// Objects (assigned from main)
-Cylinder* g_cylinder = nullptr;
-Cube* g_cube = nullptr;
+void setScene(const std::vector<SceneObject>& objects) {
+    g_objects = objects;
+}
 
 void initGL() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -28,14 +31,16 @@ void renderScene() {
 
     applyCameraView();
 
-    // Draw cylinder at origin
-    if (g_cylinder) g_cylinder->draw();
+    // Render all objects
+    for (const auto& obj : g_objects) {
+        if (!obj.mesh) continue;
 
-    // Draw cube above cylinder
-    if (g_cube) {
         glPushMatrix();
-        glTranslatef(0.0f, g_cylinder->height * 0.5f + g_cube->size, 0.0f);
-        g_cube->draw();
+
+        glTranslatef(obj.position.x, obj.position.y, obj.position.z);
+
+        obj.mesh->draw();
+
         glPopMatrix();
     }
 

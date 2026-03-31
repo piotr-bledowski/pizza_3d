@@ -1,14 +1,16 @@
 ﻿#include <GL/freeglut.h>
+#include <vector>
+
 #include "Renderer.h"
 #include "Input.h"
 #include "Mesh/Cylinder.h"
 #include "Mesh/Cube.h"
+#include "Scene/SceneObject.h"
 
-
-// Global parameters (user-controlled)
+// User-controlled parameters
 float g_radius = 2.5f;
 float g_height = 0.3f;
-int g_segments = 32;
+int   g_segments = 32;
 
 float g_cubeSize = 0.5f;
 
@@ -18,9 +20,23 @@ int main(int argc, char** argv) {
     glutInitWindowSize(800, 600);
     glutCreateWindow("OpenGL Scene");
 
-    // Create objects using parameters
-    g_cylinder = new Cylinder(g_radius, g_height, g_segments);
-    //g_cube = new Cube(g_cubeSize);
+    // Scene definition
+    std::vector<SceneObject> objects;
+
+    // Cylinder
+    objects.push_back({
+        new Cylinder(g_radius, g_height, g_segments),
+        {0.0f, 0.0f, 0.0f}
+        });
+
+    // Cube above cylinder
+    objects.push_back({
+        new Cube(g_cubeSize),
+        {0.0f, g_height * 0.5f + g_cubeSize, 0.0f}
+        });
+
+    // Send to renderer
+    setScene(objects);
 
     initGL();
 

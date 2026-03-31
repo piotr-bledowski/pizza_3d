@@ -1,10 +1,10 @@
 #pragma once
+#include <vector>
 
-class Cylinder;
-class Cube;
-
-extern Cylinder* g_cylinder;
-extern Cube* g_cube;
+struct SceneObject;
 
 void initGL();
 void renderScene();
+
+// Scene interface
+void setScene(const std::vector<SceneObject>& objects);
