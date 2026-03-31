@@ -1,5 +1,5 @@
 #pragma once
-#include "Math/Vec3.h"
+#include "../Math/Vec3.h"
 
 class Mesh;
 
