@@ -1,0 +1,128 @@
+#include "ToppingManager.h"
+#include "../Mesh/CheeseCuboid.h"
+#include "../Mesh/Pepperoni.h"
+#include <algorithm>
+#include <cmath>
+#include <random>
+
+namespace {
+constexpr int kCheesePerClick = 10;
+constexpr int kPepperoniMaxAttempts = 80;
+constexpr float kPepperoniRadiusMin = 0.09f;
+constexpr float kPepperoniRadiusMax = 0.14f;
+constexpr float kPepperoniHeightMin = 0.018f;
+constexpr float kPepperoniHeightMax = 0.035f;
+constexpr float kCheeseDimMin = 0.035f;
+constexpr float kCheeseDimMax = 0.095f;
+constexpr float kPlacementMargin = 0.04f;
+constexpr float PI = 3.14159265358979323846f;
+} // namespace
+
+ToppingManager::ToppingManager(float pizzaRadius, float pizzaHeight, float crustEdgeRadius)
+    : innerRadius_(std::max(0.01f, pizzaRadius - crustEdgeRadius))
+    , pizzaHalfH_(pizzaHeight * 0.5f)
+    , rng_(std::random_device{}()) {}
+
+ToppingManager::~ToppingManager() {
+    for (auto& o : cheese_) {
+        delete o.mesh;
+    }
+    for (auto& o : pepperoni_) {
+        delete o.mesh;
+    }
+}
+
+bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
+    for (const auto& o : pepperoni_) {
+        const float dx = x - o.position.x;
+        const float dz = z - o.position.z;
+        const float dist = std::sqrt(dx * dx + dz * dz);
+        const auto* disc = static_cast<Pepperoni*>(o.mesh);
+        const float otherR = disc ? disc->radius : kPepperoniRadiusMax;
+        if (dist < r + otherR + kPlacementMargin) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ToppingManager::tryPlacePepperoni(float& outX, float& outZ, float r) {
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    const float maxR = std::max(0.05f, innerRadius_ - r - kPlacementMargin);
+    for (int attempt = 0; attempt < kPepperoniMaxAttempts; ++attempt) {
+        const float t = u01(rng_) * 2.0f * PI;
+        const float rad = maxR * std::sqrt(u01(rng_));
+        const float x = rad * std::cos(t);
+        const float z = rad * std::sin(t);
+        if (!pepperoniOverlaps(x, z, r)) {
+            outX = x;
+            outZ = z;
+            return true;
+        }
+    }
+    return false;
+}
+
+void ToppingManager::addCheeseBatch() {
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    std::uniform_real_distribution<float> dimDist(kCheeseDimMin, kCheeseDimMax);
+    std::uniform_real_distribution<float> rotDist(-180.0f, 180.0f);
+
+    for (int i = 0; i < kCheesePerClick; ++i) {
+        const float w = dimDist(rng_);
+        const float h = dimDist(rng_);
+        const float d = dimDist(rng_);
+
+        const float t = u01(rng_) * 2.0f * PI;
+        const float rad = std::max(0.01f, innerRadius_ - 0.02f) * std::sqrt(u01(rng_));
+        const float x = rad * std::cos(t);
+        const float z = rad * std::sin(t);
+
+        const float lift = 0.5f * std::max(w, std::max(h, d));
+        const float y = pizzaHalfH_ + lift;
+
+        SceneObject obj{};
+        obj.mesh = new CheeseCuboid(w, h, d);
+        obj.position = {x, y, z};
+        obj.rotation = {rotDist(rng_), rotDist(rng_), rotDist(rng_)};
+        cheese_.push_back(obj);
+    }
+}
+
+void ToppingManager::removeCheeseBatch() {
+    for (int k = 0; k < kCheesePerClick && !cheese_.empty(); ++k) {
+        delete cheese_.back().mesh;
+        cheese_.pop_back();
+    }
+}
+
+void ToppingManager::addPepperoni() {
+    std::uniform_real_distribution<float> radDist(kPepperoniRadiusMin, kPepperoniRadiusMax);
+    std::uniform_real_distribution<float> hDist(kPepperoniHeightMin, kPepperoniHeightMax);
+    std::uniform_real_distribution<float> rotY(-180.0f, 180.0f);
+
+    const float pr = radDist(rng_);
+    float px = 0.0f;
+    float pz = 0.0f;
+    if (!tryPlacePepperoni(px, pz, pr)) {
+        return;
+    }
+
+    const float ph = hDist(rng_);
+    const int segs = 20;
+
+    SceneObject obj{};
+    obj.mesh = new Pepperoni(pr, ph, segs);
+    const float lift = ph * 0.5f;
+    obj.position = {px, pizzaHalfH_ + lift, pz};
+    obj.rotation = {0.0f, rotY(rng_), 0.0f};
+    pepperoni_.push_back(obj);
+}
+
+void ToppingManager::removePepperoni() {
+    if (pepperoni_.empty()) {
+        return;
+    }
+    delete pepperoni_.back().mesh;
+    pepperoni_.pop_back();
+}
