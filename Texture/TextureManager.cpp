@@ -6,6 +6,7 @@
 #include <vector>
 
 unsigned int TextureManager::g_pizzaTextureID = 0;
+unsigned int TextureManager::g_sauceTextureID = 0;
 
 void TextureManager::generatePizzaTexture()
 {
@@ -118,9 +119,78 @@ void TextureManager::generatePizzaTexture()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData.data());
 }
 
+void TextureManager::generateSauceTexture()
+{
+    constexpr int width = 256;
+    constexpr int height = 256;
+    const int n = width * height;
+
+    // Tomato base: red-dominant, tight range (all shades stay "sauce red")
+    const float baseR = 0.66f;
+    const float baseG = 0.085f;
+    const float baseB = 0.055f;
+
+    std::vector<float> rCh(n, baseR);
+    std::vector<float> gCh(n, baseG);
+    std::vector<float> bCh(n, baseB);
+
+    // Smeared streaks: sums of sin(nx*a + ny*b) = parallel bands / brush strokes
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const int i = y * width + x;
+            const float nx = static_cast<float>(x) / static_cast<float>(width);
+            const float ny = static_cast<float>(y) / static_cast<float>(height);
+
+            const float s1 = std::sin(nx * 24.0f + ny * 18.0f);
+            const float s2 = std::sin(nx * 11.5f - ny * 28.0f);
+            const float s3 = std::sin(nx * 33.0f + ny * 9.0f);
+            const float s4 = 0.65f * std::sin(nx * 71.0f + ny * 52.0f);
+            const float s5 = 0.5f * std::sin(nx * 5.0f + ny * 4.2f);
+
+            float streak = 0.026f * s1 + 0.022f * s2 + 0.02f * s3 + 0.014f * s4;
+            const float slow = 0.5f + 0.5f * std::sin(nx * 2.1f + ny * 1.7f);
+            streak *= (0.58f + 0.42f * slow);
+            streak += 0.012f * s5;
+
+            // Stay in red family: mostly R, slight G/B shift with streak
+            rCh[i] += streak * 1.15f;
+            gCh[i] += streak * 0.32f;
+            bCh[i] += streak * 0.22f;
+        }
+    }
+
+    std::vector<unsigned char> textureData(static_cast<size_t>(width * height * 3));
+    for (int i = 0; i < n; ++i)
+    {
+        const float rf = std::clamp(rCh[i], 0.0f, 1.0f);
+        const float gf = std::clamp(gCh[i], 0.0f, 1.0f);
+        const float bf = std::clamp(bCh[i], 0.0f, 1.0f);
+        textureData[static_cast<size_t>(i * 3 + 0)] = static_cast<unsigned char>(rf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 1)] = static_cast<unsigned char>(gf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 2)] = static_cast<unsigned char>(bf * 255.0f + 0.5f);
+    }
+
+    glGenTextures(1, &g_sauceTextureID);
+    glBindTexture(GL_TEXTURE_2D, g_sauceTextureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData.data());
+}
+
 void TextureManager::initPizzaTexture()
 {
     generatePizzaTexture();
+}
+
+void TextureManager::initSauceTexture()
+{
+    generateSauceTexture();
 }
 
 void TextureManager::bindPizzaTexture()
@@ -129,11 +199,22 @@ void TextureManager::bindPizzaTexture()
     glBindTexture(GL_TEXTURE_2D, g_pizzaTextureID);
 }
 
+void TextureManager::bindSauceTexture()
+{
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g_sauceTextureID);
+}
+
 void TextureManager::cleanupTextures()
 {
     if (g_pizzaTextureID != 0)
     {
         glDeleteTextures(1, &g_pizzaTextureID);
         g_pizzaTextureID = 0;
+    }
+    if (g_sauceTextureID != 0)
+    {
+        glDeleteTextures(1, &g_sauceTextureID);
+        g_sauceTextureID = 0;
     }
 }
