@@ -38,7 +38,15 @@ static void buildUI()
 
     drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
     drawText(0.02f, 0.055f, "Camera: WASD move, QE up/down, mouse look (cursor kept in window)", text);
-    drawText(0.02f, 0.09f, "UI: cheese / peas (10 per add), pepperoni (1 per add)", text);
+    drawText(0.02f, 0.09f, "UI: cheese / peas (10 per add), pepperoni (1 per add), sauce (one layer)", text);
+
+    if (drawButton(0.02f, 0.65f, bw, bh, "Add sauce", label, bg, bt, border)) {
+        g_toppings.addSauce();
+    }
+
+    if (drawButton(0.24f, 0.65f, bw, bh, "Remove sauce", label, bg, bt, border)) {
+        g_toppings.removeSauce();
+    }
 
     if (drawButton(0.02f, 0.74f, bw, bh, "Add cheese", label, bg, bt, border)) {
         g_toppings.addCheeseBatch();
@@ -68,13 +76,15 @@ static void buildUI()
 static void updateScene()
 {
     const std::vector<SceneObject>& base = g_scene.getObjects();
+    const std::vector<SceneObject>& sauce = g_toppings.getSauce();
     const std::vector<SceneObject>& cheese = g_toppings.getCheese();
     const std::vector<SceneObject>& pep = g_toppings.getPepperoni();
     const std::vector<SceneObject>& peas = g_toppings.getPeas();
 
     std::vector<SceneObject> all;
-    all.reserve(base.size() + cheese.size() + pep.size() + peas.size());
+    all.reserve(base.size() + sauce.size() + cheese.size() + pep.size() + peas.size());
     all.insert(all.end(), base.begin(), base.end());
+    all.insert(all.end(), sauce.begin(), sauce.end());
     all.insert(all.end(), cheese.begin(), cheese.end());
     all.insert(all.end(), pep.begin(), pep.end());
     all.insert(all.end(), peas.begin(), peas.end());

@@ -2,6 +2,7 @@
 #include "../Mesh/CheeseCuboid.h"
 #include "../Mesh/Pea.h"
 #include "../Mesh/Pepperoni.h"
+#include "../Mesh/Sauce.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -21,6 +22,9 @@ constexpr float kPepperoniHeightMax = 0.035f;
 constexpr float kCheeseDimMin = 0.035f;
 constexpr float kCheeseDimMax = 0.095f;
 constexpr float kPlacementMargin = 0.04f;
+constexpr float kSauceLayerHeight = 0.012f;
+constexpr float kSauceRadiusMargin = 0.08f;
+constexpr float kToppingAboveSauce = 0.003f;
 constexpr float PI = 3.14159265358979323846f;
 } // namespace
 
@@ -39,6 +43,16 @@ ToppingManager::~ToppingManager() {
     for (auto& o : peas_) {
         delete o.mesh;
     }
+    for (auto& o : sauce_) {
+        delete o.mesh;
+    }
+}
+
+float ToppingManager::surfaceYForToppings() const {
+    if (!sauce_.empty()) {
+        return pizzaHalfH_ + kSauceLayerHeight + kToppingAboveSauce;
+    }
+    return pizzaHalfH_;
 }
 
 bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
@@ -88,7 +102,7 @@ void ToppingManager::addCheeseBatch() {
         const float z = rad * std::sin(t);
 
         const float lift = 0.5f * std::max(w, std::max(h, d));
-        const float y = pizzaHalfH_ + lift;
+        const float y = surfaceYForToppings() + lift;
 
         SceneObject obj{};
         obj.mesh = new CheeseCuboid(w, h, d);
@@ -123,7 +137,7 @@ void ToppingManager::addPepperoni() {
     SceneObject obj{};
     obj.mesh = new Pepperoni(pr, ph, segs);
     const float lift = ph * 0.5f;
-    obj.position = {px, pizzaHalfH_ + lift, pz};
+    obj.position = {px, surfaceYForToppings() + lift, pz};
     obj.rotation = {0.0f, rotY(rng_), 0.0f};
     pepperoni_.push_back(obj);
 }
@@ -147,7 +161,7 @@ void ToppingManager::addPeasBatch() {
         const float rad = std::max(0.01f, innerRadius_ - pr - 0.02f) * std::sqrt(u01(rng_));
         const float x = rad * std::cos(t);
         const float z = rad * std::sin(t);
-        const float y = pizzaHalfH_ + pr;
+        const float y = surfaceYForToppings() + pr;
 
         SceneObject obj{};
         obj.mesh = new Pea(pr, kPeaSphereSlices, kPeaSphereStacks);
@@ -162,4 +176,46 @@ void ToppingManager::removePeasBatch() {
         delete peas_.back().mesh;
         peas_.pop_back();
     }
+}
+
+void ToppingManager::addSauce() {
+    if (!sauce_.empty()) {
+        return;
+    }
+    const float delta = kSauceLayerHeight + kToppingAboveSauce;
+    for (auto& o : cheese_) {
+        o.position.y += delta;
+    }
+    for (auto& o : pepperoni_) {
+        o.position.y += delta;
+    }
+    for (auto& o : peas_) {
+        o.position.y += delta;
+    }
+
+    const float r = std::max(0.1f, innerRadius_ - kSauceRadiusMargin);
+    SceneObject obj{};
+    obj.mesh = new Sauce(r, kSauceLayerHeight, 32);
+    obj.position = {0.0f, pizzaHalfH_ + kSauceLayerHeight * 0.5f, 0.0f};
+    obj.rotation = {0.0f, 0.0f, 0.0f};
+    sauce_.push_back(obj);
+}
+
+void ToppingManager::removeSauce() {
+    if (sauce_.empty()) {
+        return;
+    }
+    const float delta = kSauceLayerHeight + kToppingAboveSauce;
+    for (auto& o : cheese_) {
+        o.position.y -= delta;
+    }
+    for (auto& o : pepperoni_) {
+        o.position.y -= delta;
+    }
+    for (auto& o : peas_) {
+        o.position.y -= delta;
+    }
+
+    delete sauce_.back().mesh;
+    sauce_.pop_back();
 }

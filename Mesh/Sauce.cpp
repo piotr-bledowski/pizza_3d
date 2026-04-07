@@ -1,26 +1,23 @@
-#include "Pepperoni.h"
+#include "Sauce.h"
 #include <GL/freeglut.h>
 #include <cmath>
 
-namespace
-{
-    constexpr float PI = 3.14159265358979323846f;
+namespace {
+constexpr float PI = 3.14159265358979323846f;
 }
 
-Pepperoni::Pepperoni(float r, float h, int s) : radius(r), height(h), segments(s) {}
+Sauce::Sauce(float r, float h, int s) : radius(r), height(h), segments(s) {}
 
-void Pepperoni::draw()
-{
+void Sauce::draw() {
     const float halfH = height * 0.5f;
     const float step = 2.0f * PI / static_cast<float>(segments);
 
     glDisable(GL_TEXTURE_2D);
-    glColor3f(0.40f, 0.10f, 0.08f);
+    glColor3f(0.78f, 0.12f, 0.08f);
 
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, -halfH, 0.0f);
-    for (int i = 0; i <= segments; ++i)
-    {
+    for (int i = 0; i <= segments; ++i) {
         const float t = static_cast<float>(i) * step;
         glVertex3f(radius * std::cos(t), -halfH, radius * std::sin(t));
     }
@@ -28,16 +25,14 @@ void Pepperoni::draw()
 
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, halfH, 0.0f);
-    for (int i = segments; i >= 0; --i)
-    {
+    for (int i = segments; i >= 0; --i) {
         const float t = static_cast<float>(i) * step;
         glVertex3f(radius * std::cos(t), halfH, radius * std::sin(t));
     }
     glEnd();
 
     glBegin(GL_QUAD_STRIP);
-    for (int i = 0; i <= segments; ++i)
-    {
+    for (int i = 0; i <= segments; ++i) {
         const float t = static_cast<float>(i) * step;
         const float x = radius * std::cos(t);
         const float z = radius * std::sin(t);
