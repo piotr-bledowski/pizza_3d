@@ -38,22 +38,30 @@ static void buildUI()
 
     drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
     drawText(0.02f, 0.055f, "Camera: WASD move, QE up/down, mouse look (cursor kept in window)", text);
-    drawText(0.02f, 0.09f, "UI: cheese (10 cubes per add) and pepperoni (one disc per add)", text);
+    drawText(0.02f, 0.09f, "UI: cheese / peas (10 per add), pepperoni (1 per add)", text);
 
-    if (drawButton(0.02f, 0.82f, bw, bh, "Add cheese", label, bg, bt, border)) {
+    if (drawButton(0.02f, 0.74f, bw, bh, "Add cheese", label, bg, bt, border)) {
         g_toppings.addCheeseBatch();
     }
 
-    if (drawButton(0.24f, 0.82f, bw, bh, "Remove cheese", label, bg, bt, border)) {
+    if (drawButton(0.24f, 0.74f, bw, bh, "Remove cheese", label, bg, bt, border)) {
         g_toppings.removeCheeseBatch();
     }
 
-    if (drawButton(0.02f, 0.91f, bw, bh, "Add pepperoni", label, bg, bt, border)) {
+    if (drawButton(0.02f, 0.83f, bw, bh, "Add pepperoni", label, bg, bt, border)) {
         g_toppings.addPepperoni();
     }
 
-    if (drawButton(0.24f, 0.91f, bw, bh, "Remove pepperoni", label, bg, bt, border)) {
+    if (drawButton(0.24f, 0.83f, bw, bh, "Remove pepperoni", label, bg, bt, border)) {
         g_toppings.removePepperoni();
+    }
+
+    if (drawButton(0.02f, 0.92f, bw, bh, "Add peas", label, bg, bt, border)) {
+        g_toppings.addPeasBatch();
+    }
+
+    if (drawButton(0.24f, 0.92f, bw, bh, "Remove peas", label, bg, bt, border)) {
+        g_toppings.removePeasBatch();
     }
 }
 
@@ -62,12 +70,14 @@ static void updateScene()
     const std::vector<SceneObject>& base = g_scene.getObjects();
     const std::vector<SceneObject>& cheese = g_toppings.getCheese();
     const std::vector<SceneObject>& pep = g_toppings.getPepperoni();
+    const std::vector<SceneObject>& peas = g_toppings.getPeas();
 
     std::vector<SceneObject> all;
-    all.reserve(base.size() + cheese.size() + pep.size());
+    all.reserve(base.size() + cheese.size() + pep.size() + peas.size());
     all.insert(all.end(), base.begin(), base.end());
     all.insert(all.end(), cheese.begin(), cheese.end());
     all.insert(all.end(), pep.begin(), pep.end());
+    all.insert(all.end(), peas.begin(), peas.end());
     setScene(all);
 }
 

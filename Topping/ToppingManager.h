@@ -11,9 +11,12 @@ public:
     void removeCheeseBatch();
     void addPepperoni();
     void removePepperoni();
+    void addPeasBatch();
+    void removePeasBatch();
 
     const std::vector<SceneObject>& getCheese() const { return cheese_; }
     const std::vector<SceneObject>& getPepperoni() const { return pepperoni_; }
+    const std::vector<SceneObject>& getPeas() const { return peas_; }
 
     ~ToppingManager();
 
@@ -26,6 +29,7 @@ private:
     std::mt19937 rng_;
     std::vector<SceneObject> cheese_;
     std::vector<SceneObject> pepperoni_;
+    std::vector<SceneObject> peas_;
 
     bool pepperoniOverlaps(float x, float z, float r) const;
     bool tryPlacePepperoni(float& outX, float& outZ, float r);

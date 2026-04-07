@@ -1,5 +1,6 @@
 #include "ToppingManager.h"
 #include "../Mesh/CheeseCuboid.h"
+#include "../Mesh/Pea.h"
 #include "../Mesh/Pepperoni.h"
 #include <algorithm>
 #include <cmath>
@@ -7,6 +8,11 @@
 
 namespace {
 constexpr int kCheesePerClick = 10;
+constexpr int kPeasPerClick = 10;
+constexpr float kPeaRadiusMin = 0.028f;
+constexpr float kPeaRadiusMax = 0.055f;
+constexpr int kPeaSphereSlices = 10;
+constexpr int kPeaSphereStacks = 10;
 constexpr int kPepperoniMaxAttempts = 80;
 constexpr float kPepperoniRadiusMin = 0.09f;
 constexpr float kPepperoniRadiusMax = 0.14f;
@@ -28,6 +34,9 @@ ToppingManager::~ToppingManager() {
         delete o.mesh;
     }
     for (auto& o : pepperoni_) {
+        delete o.mesh;
+    }
+    for (auto& o : peas_) {
         delete o.mesh;
     }
 }
@@ -125,4 +134,32 @@ void ToppingManager::removePepperoni() {
     }
     delete pepperoni_.back().mesh;
     pepperoni_.pop_back();
+}
+
+void ToppingManager::addPeasBatch() {
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    std::uniform_real_distribution<float> radDist(kPeaRadiusMin, kPeaRadiusMax);
+    std::uniform_real_distribution<float> rotDist(-180.0f, 180.0f);
+
+    for (int i = 0; i < kPeasPerClick; ++i) {
+        const float pr = radDist(rng_);
+        const float t = u01(rng_) * 2.0f * PI;
+        const float rad = std::max(0.01f, innerRadius_ - pr - 0.02f) * std::sqrt(u01(rng_));
+        const float x = rad * std::cos(t);
+        const float z = rad * std::sin(t);
+        const float y = pizzaHalfH_ + pr;
+
+        SceneObject obj{};
+        obj.mesh = new Pea(pr, kPeaSphereSlices, kPeaSphereStacks);
+        obj.position = {x, y, z};
+        obj.rotation = {rotDist(rng_), rotDist(rng_), rotDist(rng_)};
+        peas_.push_back(obj);
+    }
+}
+
+void ToppingManager::removePeasBatch() {
+    for (int k = 0; k < kPeasPerClick && !peas_.empty(); ++k) {
+        delete peas_.back().mesh;
+        peas_.pop_back();
+    }
 }
