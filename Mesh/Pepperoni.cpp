@@ -15,7 +15,7 @@ void Pepperoni::draw()
     const float step = 2.0f * PI / static_cast<float>(segments);
 
     glDisable(GL_TEXTURE_2D);
-    glColor3f(0.40f, 0.10f, 0.08f);
+    glColor3f(0.72f, 0.18f, 0.14f);
 
     glBegin(GL_TRIANGLE_FAN);
     glVertex3f(0.0f, -halfH, 0.0f);
