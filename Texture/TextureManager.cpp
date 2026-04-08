@@ -7,6 +7,7 @@
 
 unsigned int TextureManager::g_pizzaTextureID = 0;
 unsigned int TextureManager::g_sauceTextureID = 0;
+unsigned int TextureManager::g_pepperoniTextureID = 0;
 
 void TextureManager::generatePizzaTexture()
 {
@@ -183,6 +184,100 @@ void TextureManager::generateSauceTexture()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData.data());
 }
 
+void TextureManager::generatePepperoniTexture()
+{
+    constexpr int width = 256;
+    constexpr int height = 256;
+    const int n = width * height;
+
+    // Pepperoni base: deep cured-meat red with subtle variation.
+    const float baseR = 0.42f;
+    const float baseG = 0.10f;
+    const float baseB = 0.085f;
+
+    std::vector<float> rCh(n, baseR);
+    std::vector<float> gCh(n, baseG);
+    std::vector<float> bCh(n, baseB);
+
+    // Gentle marbling so the slice isn't flat.
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const int i = y * width + x;
+            const float nx = static_cast<float>(x) / static_cast<float>(width);
+            const float ny = static_cast<float>(y) / static_cast<float>(height);
+            const float marbling = 0.018f * std::sin(nx * 18.0f + ny * 24.0f) + 0.012f * std::sin(nx * 43.0f - ny * 31.0f);
+            rCh[i] += marbling;
+            gCh[i] += marbling * 0.42f;
+            bCh[i] += marbling * 0.36f;
+        }
+    }
+
+    // Small fat specks (salami-like): off-white/pink dots.
+    std::mt19937 rng(0x50455050u);
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    constexpr int kNumSpecks = 260;
+    for (int s = 0; s < kNumSpecks; ++s)
+    {
+        const float cx = u01(rng) * static_cast<float>(width);
+        const float cy = u01(rng) * static_cast<float>(height);
+        const float rx = 0.65f + u01(rng) * 1.8f;
+        const float ry = 0.55f + u01(rng) * 1.6f;
+        const float angle = u01(rng) * 6.28318530718f;
+        const float ca = std::cos(angle);
+        const float sa = std::sin(angle);
+
+        const int x0 = std::max(0, static_cast<int>(std::floor(cx - rx - 1.0f)));
+        const int x1 = std::min(width - 1, static_cast<int>(std::ceil(cx + rx + 1.0f)));
+        const int y0 = std::max(0, static_cast<int>(std::floor(cy - ry - 1.0f)));
+        const int y1 = std::min(height - 1, static_cast<int>(std::ceil(cy + ry + 1.0f)));
+
+        for (int yy = y0; yy <= y1; ++yy)
+        {
+            for (int xx = x0; xx <= x1; ++xx)
+            {
+                const float dx = static_cast<float>(xx) - cx;
+                const float dy = static_cast<float>(yy) - cy;
+                const float qx = (dx * ca + dy * sa) / rx;
+                const float qy = (-dx * sa + dy * ca) / ry;
+                const float d2 = qx * qx + qy * qy;
+                if (d2 >= 1.0f)
+                {
+                    continue;
+                }
+                const float t = 1.0f - std::sqrt(d2);
+                const float w = t * t * (3.0f - 2.0f * t);
+                const int idx = yy * width + xx;
+                rCh[idx] += 0.18f * w;
+                gCh[idx] += 0.13f * w;
+                bCh[idx] += 0.11f * w;
+            }
+        }
+    }
+
+    std::vector<unsigned char> textureData(static_cast<size_t>(width * height * 3));
+    for (int i = 0; i < n; ++i)
+    {
+        const float rf = std::clamp(rCh[i], 0.0f, 1.0f);
+        const float gf = std::clamp(gCh[i], 0.0f, 1.0f);
+        const float bf = std::clamp(bCh[i], 0.0f, 1.0f);
+        textureData[static_cast<size_t>(i * 3 + 0)] = static_cast<unsigned char>(rf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 1)] = static_cast<unsigned char>(gf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 2)] = static_cast<unsigned char>(bf * 255.0f + 0.5f);
+    }
+
+    glGenTextures(1, &g_pepperoniTextureID);
+    glBindTexture(GL_TEXTURE_2D, g_pepperoniTextureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData.data());
+}
+
 void TextureManager::initPizzaTexture()
 {
     generatePizzaTexture();
@@ -191,6 +286,11 @@ void TextureManager::initPizzaTexture()
 void TextureManager::initSauceTexture()
 {
     generateSauceTexture();
+}
+
+void TextureManager::initPepperoniTexture()
+{
+    generatePepperoniTexture();
 }
 
 void TextureManager::bindPizzaTexture()
@@ -205,6 +305,12 @@ void TextureManager::bindSauceTexture()
     glBindTexture(GL_TEXTURE_2D, g_sauceTextureID);
 }
 
+void TextureManager::bindPepperoniTexture()
+{
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g_pepperoniTextureID);
+}
+
 void TextureManager::cleanupTextures()
 {
     if (g_pizzaTextureID != 0)
@@ -216,5 +322,10 @@ void TextureManager::cleanupTextures()
     {
         glDeleteTextures(1, &g_sauceTextureID);
         g_sauceTextureID = 0;
+    }
+    if (g_pepperoniTextureID != 0)
+    {
+        glDeleteTextures(1, &g_pepperoniTextureID);
+        g_pepperoniTextureID = 0;
     }
 }
