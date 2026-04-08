@@ -28,6 +28,8 @@ void initGL()
 
     // Initialize textures
     TextureManager::initPizzaTexture();
+    TextureManager::initSauceTexture();
+    TextureManager::initPepperoniTexture();
 
     // Enable texture mapping
     glEnable(GL_TEXTURE_2D);
