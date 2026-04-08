@@ -8,6 +8,7 @@
 unsigned int TextureManager::g_pizzaTextureID = 0;
 unsigned int TextureManager::g_sauceTextureID = 0;
 unsigned int TextureManager::g_pepperoniTextureID = 0;
+unsigned int TextureManager::g_cheeseTextureID = 0;
 bool TextureManager::g_baked = false;
 
 namespace {
@@ -286,11 +287,58 @@ void TextureManager::generatePepperoniTexture()
     uploadRgbTexture(g_pepperoniTextureID, width, height, textureData.data());
 }
 
+void TextureManager::generateCheeseTexture()
+{
+    const bool baked = g_baked;
+    constexpr int width = 256;
+    constexpr int height = 256;
+    const int n = width * height;
+
+    const float baseR = baked ? 0.80f : 0.93f;
+    const float baseG = baked ? 0.68f : 0.86f;
+    const float baseB = baked ? 0.30f : 0.44f;
+
+    std::vector<float> rCh(n, baseR);
+    std::vector<float> gCh(n, baseG);
+    std::vector<float> bCh(n, baseB);
+
+    const float grainScale = baked ? 0.9f : 1.0f;
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const int i = y * width + x;
+            const float nx = static_cast<float>(x) / static_cast<float>(width);
+            const float ny = static_cast<float>(y) / static_cast<float>(height);
+            const float grain = grainScale
+                * (0.005f * std::sin(nx * 55.0f + ny * 48.0f) + 0.004f * std::sin(nx * 102.0f - ny * 77.0f)
+                    + 0.003f * std::sin(nx * 161.0f + ny * 119.0f));
+            rCh[i] += grain;
+            gCh[i] += grain * 0.96f;
+            bCh[i] += grain * 0.55f;
+        }
+    }
+
+    std::vector<unsigned char> textureData(static_cast<size_t>(width * height * 3));
+    for (int i = 0; i < n; ++i)
+    {
+        const float rf = std::clamp(rCh[i], 0.0f, 1.0f);
+        const float gf = std::clamp(gCh[i], 0.0f, 1.0f);
+        const float bf = std::clamp(bCh[i], 0.0f, 1.0f);
+        textureData[static_cast<size_t>(i * 3 + 0)] = static_cast<unsigned char>(rf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 1)] = static_cast<unsigned char>(gf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 2)] = static_cast<unsigned char>(bf * 255.0f + 0.5f);
+    }
+
+    uploadRgbTexture(g_cheeseTextureID, width, height, textureData.data());
+}
+
 void TextureManager::regenerateAllTextures()
 {
     generatePizzaTexture();
     generateSauceTexture();
     generatePepperoniTexture();
+    generateCheeseTexture();
 }
 
 void TextureManager::initPizzaTexture()
@@ -306,6 +354,11 @@ void TextureManager::initSauceTexture()
 void TextureManager::initPepperoniTexture()
 {
     generatePepperoniTexture();
+}
+
+void TextureManager::initCheeseTexture()
+{
+    generateCheeseTexture();
 }
 
 void TextureManager::setBaked(bool baked)
@@ -341,6 +394,12 @@ void TextureManager::bindPepperoniTexture()
     glBindTexture(GL_TEXTURE_2D, g_pepperoniTextureID);
 }
 
+void TextureManager::bindCheeseTexture()
+{
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g_cheeseTextureID);
+}
+
 void TextureManager::cleanupTextures()
 {
     if (g_pizzaTextureID != 0)
@@ -357,5 +416,10 @@ void TextureManager::cleanupTextures()
     {
         glDeleteTextures(1, &g_pepperoniTextureID);
         g_pepperoniTextureID = 0;
+    }
+    if (g_cheeseTextureID != 0)
+    {
+        glDeleteTextures(1, &g_cheeseTextureID);
+        g_cheeseTextureID = 0;
     }
 }

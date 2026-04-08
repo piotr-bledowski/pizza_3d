@@ -47,11 +47,13 @@ static void buildUI()
         if (drawButton(0.02f, 0.56f, bw, bh, "Bake", label, bg, bt, border))
         {
             TextureManager::setBaked(true);
+            g_toppings.syncCheeseForBakeState(true);
         }
 
         if (drawButton(0.24f, 0.56f, bw, bh, "Unbake", label, bg, bt, border))
         {
             TextureManager::setBaked(false);
+            g_toppings.syncCheeseForBakeState(false);
         }
 
         if (drawButton(0.02f, 0.65f, bw, bh, "Add sauce", label, bg, bt, border))
