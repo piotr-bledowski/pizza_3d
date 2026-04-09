@@ -1,4 +1,5 @@
 #include "Pepperoni.h"
+#include "CuppedPepperoni.h"
 #include "../Texture/TextureManager.h"
 #include <GL/freeglut.h>
 #include <cmath>
@@ -8,7 +9,11 @@ namespace
     constexpr float PI = 3.14159265358979323846f;
 }
 
-Pepperoni::Pepperoni(float r, float h, int s) : radius(r), height(h), segments(s) {}
+Pepperoni::Pepperoni(float r, float h, int s)
+    : radius(r)
+    , height(h)
+    , segments(s)
+    , cupped_(std::make_unique<CuppedPepperoni>(r * 0.88f, h, s)) {}
 
 void Pepperoni::draw()
 {
@@ -60,4 +65,9 @@ void Pepperoni::draw()
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
+}
+
+Mesh* Pepperoni::bakeSubstitute()
+{
+    return cupped_.get();
 }
