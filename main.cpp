@@ -10,6 +10,7 @@
 #include "Scene/SceneManager.h"
 #include "Scene/SceneObject.h"
 #include "Topping/ToppingManager.h"
+#include "Texture/TextureManager.h"
 #include "UI/UI.h"
 
 float g_radius = 2.5f;
@@ -41,7 +42,19 @@ static void buildUI()
 
     if (getControlMode() == ControlMode::UI)
     {
-        drawText(0.02f, 0.09f, "UI: cheese / peas (10 per add), pepperoni (1 per add), sauce (one layer)", text);
+        drawText(0.02f, 0.09f, "UI: toppings, sauce, Bake / Unbake pizza", text);
+
+        if (drawButton(0.02f, 0.56f, bw, bh, "Bake", label, bg, bt, border))
+        {
+            TextureManager::setBaked(true);
+            g_toppings.syncCheeseForBakeState(true);
+        }
+
+        if (drawButton(0.24f, 0.56f, bw, bh, "Unbake", label, bg, bt, border))
+        {
+            TextureManager::setBaked(false);
+            g_toppings.syncCheeseForBakeState(false);
+        }
 
         if (drawButton(0.02f, 0.65f, bw, bh, "Add sauce", label, bg, bt, border))
         {

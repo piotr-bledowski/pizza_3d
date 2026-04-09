@@ -3,6 +3,7 @@
 #include "../Mesh/Pea.h"
 #include "../Mesh/Pepperoni.h"
 #include "../Mesh/Sauce.h"
+#include "../Texture/TextureManager.h"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -17,8 +18,8 @@ constexpr int kPeaSphereStacks = 10;
 constexpr int kPepperoniMaxAttempts = 80;
 constexpr float kPepperoniRadiusMin = 0.09f;
 constexpr float kPepperoniRadiusMax = 0.14f;
-constexpr float kPepperoniHeightMin = 0.018f;
-constexpr float kPepperoniHeightMax = 0.035f;
+constexpr float kPepperoniHeightMin = 0.010f;
+constexpr float kPepperoniHeightMax = 0.020f;
 constexpr float kCheeseDimMin = 0.035f;
 constexpr float kCheeseDimMax = 0.095f;
 constexpr float kPlacementMargin = 0.04f;
@@ -104,10 +105,17 @@ void ToppingManager::addCheeseBatch() {
         const float lift = 0.5f * std::max(w, std::max(h, d));
         const float y = surfaceYForToppings() + lift;
 
+        const Vec3 unbakedRot{rotDist(rng_), rotDist(rng_), rotDist(rng_)};
+
         SceneObject obj{};
         obj.mesh = new CheeseCuboid(w, h, d);
         obj.position = {x, y, z};
-        obj.rotation = {rotDist(rng_), rotDist(rng_), rotDist(rng_)};
+        if (TextureManager::isBaked()) {
+            obj.rotation = {0.0f, 0.0f, 0.0f};
+        } else {
+            obj.rotation = unbakedRot;
+        }
+        cheeseUnbakedRotation_.push_back(unbakedRot);
         cheese_.push_back(obj);
     }
 }
@@ -116,6 +124,21 @@ void ToppingManager::removeCheeseBatch() {
     for (int k = 0; k < kCheesePerClick && !cheese_.empty(); ++k) {
         delete cheese_.back().mesh;
         cheese_.pop_back();
+        cheeseUnbakedRotation_.pop_back();
+    }
+}
+
+void ToppingManager::syncCheeseForBakeState(bool baked) {
+    const size_t n = cheese_.size();
+    if (cheeseUnbakedRotation_.size() != n) {
+        return;
+    }
+    for (size_t i = 0; i < n; ++i) {
+        if (baked) {
+            cheese_[i].rotation = {0.0f, 0.0f, 0.0f};
+        } else {
+            cheese_[i].rotation = cheeseUnbakedRotation_[i];
+        }
     }
 }
 

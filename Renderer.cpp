@@ -30,6 +30,7 @@ void initGL()
     TextureManager::initPizzaTexture();
     TextureManager::initSauceTexture();
     TextureManager::initPepperoniTexture();
+    TextureManager::initCheeseTexture();
 
     // Enable texture mapping
     glEnable(GL_TEXTURE_2D);
@@ -57,7 +58,15 @@ void renderScene()
         glRotatef(obj.rotation.y, 0.0f, 1.0f, 0.0f);
         glRotatef(obj.rotation.z, 0.0f, 0.0f, 1.0f);
 
-        obj.mesh->draw();
+        Mesh* drawMesh = obj.mesh;
+        if (TextureManager::isBaked())
+        {
+            if (Mesh* sub = obj.mesh->bakeSubstitute())
+            {
+                drawMesh = sub;
+            }
+        }
+        drawMesh->draw();
 
         glPopMatrix();
     }
