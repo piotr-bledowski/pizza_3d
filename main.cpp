@@ -36,6 +36,7 @@ static void buildUI()
     Color4 border{0.45f, 0.5f, 0.55f, 1.0f};
     const float bt = 2.0f;
 
+    const float bw = 0.2f;
     const float bh = 0.08f;
 
     drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
