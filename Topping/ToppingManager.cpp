@@ -243,3 +243,12 @@ void ToppingManager::removeSauce() {
     delete sauce_.back().mesh;
     sauce_.pop_back();
 }
+
+void ToppingManager::setSliceCount(int sliceCount) {
+    sliceCount_ = std::max(1, sliceCount);
+    for (auto& o : sauce_) {
+        if (auto* sauceMesh = dynamic_cast<Sauce*>(o.mesh)) {
+            sauceMesh->sliceCount = sliceCount_;
+        }
+    }
+}

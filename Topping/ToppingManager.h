@@ -16,6 +16,7 @@ public:
     void removePeasBatch();
     void addSauce();
     void removeSauce();
+    void setSliceCount(int sliceCount);
 
     /// When baked: cheese rotations become flat (0). When unbaked: restores saved rotations.
     void syncCheeseForBakeState(bool baked);

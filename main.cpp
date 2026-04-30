@@ -1,4 +1,5 @@
 ﻿#include <GL/freeglut.h>
+#include <algorithm>
 #include <cstdio>
 #include <vector>
 
@@ -23,11 +24,14 @@ float g_cuboidHeight = 0.2f;
 float g_cuboidDepth = 0.6f;
 
 constexpr float g_pizzaCrustEdgeRadius = 0.15f;
-constexpr int g_pizzaSliceCount = 6;
+constexpr int g_defaultPizzaSliceCount = 6;
 
 SceneManager g_scene;
-ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius, g_pizzaSliceCount);
+ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius, 1);
+Cylinder *g_pizzaBaseMesh = nullptr;
 bool g_showToppingControls = false;
+bool g_isSliced = false;
+int g_sliceCount = g_defaultPizzaSliceCount;
 int g_cheeseClicks = 0;
 int g_pepperoniClicks = 0;
 int g_peasClicks = 0;
@@ -54,6 +58,44 @@ static void buildUI()
         const float leftX = 0.02f;
         const float buttonGap = 0.02f;
         const float bakeY = 0.90f;
+        const float sliceY = bakeY - bh - 0.02f;
+        const float manageY = sliceY - bh - 0.02f;
+        const float manageX = leftX;
+        const float manageW = 0.42f;
+        const float smallW = 0.055f;
+        const float smallGap = 0.01f;
+
+        const char *manageLabel = g_showToppingControls ? "Hide topping management" : "Show topping management";
+        if (drawButton(manageX, manageY, manageW, bh, manageLabel, label, bg, bt, border))
+        {
+            g_showToppingControls = !g_showToppingControls;
+        }
+
+        if (drawButton(leftX, sliceY, bw, bh, "Slice", label, bg, bt, border))
+        {
+            g_isSliced = true;
+        }
+        if (drawButton(leftX + bw + buttonGap, sliceY, bw, bh, "Unslice", label, bg, bt, border))
+        {
+            g_isSliced = false;
+        }
+        if (drawButton(leftX + bw + buttonGap + bw + buttonGap, sliceY, smallW, bh, "-", label, bg, bt, border))
+        {
+            g_sliceCount = std::max(2, g_sliceCount - 1);
+        }
+        if (drawButton(leftX + bw + buttonGap + bw + buttonGap + smallW + smallGap, sliceY, smallW, bh, "+", label, bg, bt, border))
+        {
+            g_sliceCount = std::min(16, g_sliceCount + 1);
+        }
+        char sliceCountBuffer[32];
+        snprintf(sliceCountBuffer, sizeof(sliceCountBuffer), "Slices: %d", g_sliceCount);
+        drawText(leftX + bw + buttonGap + bw + buttonGap + smallW + smallGap + smallW + 0.01f, sliceY + 0.05f, sliceCountBuffer, text);
+
+        const int effectiveSliceCount = g_isSliced ? g_sliceCount : 1;
+        if (g_pizzaBaseMesh) {
+            g_pizzaBaseMesh->sliceCount = effectiveSliceCount;
+        }
+        g_toppings.setSliceCount(effectiveSliceCount);
 
         if (drawButton(leftX, bakeY, bw, bh, "Bake", label, bg, bt, border))
         {
@@ -67,15 +109,6 @@ static void buildUI()
             g_toppings.syncCheeseForBakeState(false);
         }
 
-        const float manageX = leftX;
-        const float manageY = bakeY - bh - 0.02f;
-        const float manageW = 0.42f;
-        const char *manageLabel = g_showToppingControls ? "Hide topping management" : "Show topping management";
-        if (drawButton(manageX, manageY, manageW, bh, manageLabel, label, bg, bt, border))
-        {
-            g_showToppingControls = !g_showToppingControls;
-        }
-
         if (!g_showToppingControls)
         {
             return;
@@ -86,8 +119,6 @@ static void buildUI()
         const float rowStep = 0.08f;
         const float rowH = 0.07f;
         const float nameW = 0.23f;
-        const float smallW = 0.055f;
-        const float smallGap = 0.01f;
         const float counterX = rowX + nameW + smallGap + smallW + smallGap + smallW + 0.02f;
         const float counterYOffset = 0.045f;
 
@@ -186,7 +217,8 @@ int main(int argc, char **argv)
     glutInitWindowSize(800, 600);
     glutCreateWindow("OpenGL Scene");
 
-    g_scene.addObject({new Cylinder(g_radius, g_height, g_segments, g_pizzaSliceCount), {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
+    g_pizzaBaseMesh = new Cylinder(g_radius, g_height, g_segments, 1);
+    g_scene.addObject({g_pizzaBaseMesh, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
 
     initGL();
 
