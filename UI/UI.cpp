@@ -23,8 +23,17 @@ namespace
         int id;
     };
 
+    struct UILabelBox
+    {
+        float nx, ny, nw, nh;
+        char label[256];
+        Color4 textColor, bgColor, borderColor;
+        float borderThickness;
+    };
+
     std::vector<UIText> g_frameTexts;
     std::vector<UIButton> g_frameButtons;
+    std::vector<UILabelBox> g_frameLabels;
     std::vector<UIButton> g_lastButtons;
 
     int g_nextButtonId = 0;
@@ -58,6 +67,7 @@ void uiBeginFrame()
 {
     g_frameTexts.clear();
     g_frameButtons.clear();
+    g_frameLabels.clear();
     g_nextButtonId = 0;
 }
 
@@ -115,6 +125,23 @@ bool drawButton(float nx, float ny, float nw, float nh, const char *label,
         g_pendingClickId = -1;
     }
     return hit;
+}
+
+void drawLabelBox(float nx, float ny, float nw, float nh, const char *label,
+                  const Color4 &textColor, const Color4 &bgColor,
+                  float borderThickness, const Color4 &borderColor)
+{
+    UILabelBox l{};
+    l.nx = nx;
+    l.ny = ny;
+    l.nw = nw;
+    l.nh = nh;
+    l.textColor = textColor;
+    l.bgColor = bgColor;
+    l.borderColor = borderColor;
+    l.borderThickness = borderThickness;
+    (void)strncpy_s(l.label, sizeof(l.label), label, _TRUNCATE);
+    g_frameLabels.push_back(l);
 }
 
 void uiOnMouseClick(int x, int y, int button, int state)
@@ -206,6 +233,35 @@ void uiRenderOverlay(int windowWidth, int windowHeight)
         int tx = static_cast<int>(px + (pw - static_cast<float>(tw)) * 0.5f);
         int ty = static_cast<int>(py + (ph - 15.0f) * 0.5f + 12.0f);
         drawTextPixels(tx, ty, b.label, b.textColor);
+    }
+
+    for (const UILabelBox &l : g_frameLabels)
+    {
+        float px = l.nx * static_cast<float>(windowWidth);
+        float py = l.ny * static_cast<float>(windowHeight);
+        float pw = l.nw * static_cast<float>(windowWidth);
+        float ph = l.nh * static_cast<float>(windowHeight);
+
+        glColor4f(l.bgColor.r, l.bgColor.g, l.bgColor.b, l.bgColor.a);
+        glBegin(GL_QUADS);
+        glVertex2f(px, py);
+        glVertex2f(px + pw, py);
+        glVertex2f(px + pw, py + ph);
+        glVertex2f(px, py + ph);
+        glEnd();
+
+        glLineWidth(l.borderThickness);
+        glColor4f(l.borderColor.r, l.borderColor.g, l.borderColor.b, l.borderColor.a);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(px + 0.5f, py + 0.5f);
+        glVertex2f(px + pw - 0.5f, py + 0.5f);
+        glVertex2f(px + pw - 0.5f, py + ph - 0.5f);
+        glVertex2f(px + 0.5f, py + ph - 0.5f);
+        glEnd();
+
+        int tx = static_cast<int>(px + 10.0f);
+        int ty = static_cast<int>(py + (ph - 15.0f) * 0.5f + 12.0f);
+        drawTextPixels(tx, ty, l.label, l.textColor);
     }
 
     glPopMatrix();

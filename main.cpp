@@ -24,16 +24,17 @@ constexpr float g_pizzaCrustEdgeRadius = 0.15f;
 
 SceneManager g_scene;
 ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius);
+bool g_showToppingControls = false;
 
 static void buildUI()
 {
     Color4 text{1.0f, 1.0f, 1.0f, 1.0f};
     Color4 label{0.92f, 0.92f, 0.94f, 1.0f};
     Color4 bg{0.22f, 0.22f, 0.26f, 0.96f};
+    Color4 darkLabelBg{0.15f, 0.15f, 0.18f, 0.98f};
     Color4 border{0.45f, 0.5f, 0.55f, 1.0f};
     const float bt = 2.0f;
 
-    const float bw = 0.2f;
     const float bh = 0.08f;
 
     drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
@@ -43,42 +44,69 @@ static void buildUI()
     {
         drawText(0.02f, 0.09f, "UI: cheese / peas (10 per add), pepperoni (1 per add), sauce (one layer)", text);
 
-        if (drawButton(0.02f, 0.65f, bw, bh, "Add sauce", label, bg, bt, border))
+        const float manageX = 0.02f;
+        const float manageY = 0.65f;
+        const float manageW = 0.42f;
+        const char *manageLabel = g_showToppingControls ? "Hide topping management" : "Show topping management";
+        if (drawButton(manageX, manageY, manageW, bh, manageLabel, label, bg, bt, border))
+        {
+            g_showToppingControls = !g_showToppingControls;
+        }
+
+        if (!g_showToppingControls)
+        {
+            return;
+        }
+
+        const float rowX = 0.02f;
+        const float rowStartY = 0.74f;
+        const float rowStep = 0.085f;
+        const float rowH = 0.07f;
+        const float nameW = 0.23f;
+        const float smallW = 0.055f;
+        const float smallGap = 0.01f;
+
+        float y = rowStartY;
+
+        drawLabelBox(rowX, y, nameW, rowH, "Sauce", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addSauce();
         }
-
-        if (drawButton(0.24f, 0.65f, bw, bh, "Remove sauce", label, bg, bt, border))
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removeSauce();
         }
 
-        if (drawButton(0.02f, 0.74f, bw, bh, "Add cheese", label, bg, bt, border))
+        y += rowStep;
+        drawLabelBox(rowX, y, nameW, rowH, "Cheese", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addCheeseBatch();
         }
-
-        if (drawButton(0.24f, 0.74f, bw, bh, "Remove cheese", label, bg, bt, border))
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removeCheeseBatch();
         }
 
-        if (drawButton(0.02f, 0.83f, bw, bh, "Add pepperoni", label, bg, bt, border))
+        y += rowStep;
+        drawLabelBox(rowX, y, nameW, rowH, "Pepperoni", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPepperoni();
         }
-
-        if (drawButton(0.24f, 0.83f, bw, bh, "Remove pepperoni", label, bg, bt, border))
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removePepperoni();
         }
 
-        if (drawButton(0.02f, 0.92f, bw, bh, "Add peas", label, bg, bt, border))
+        y += rowStep;
+        drawLabelBox(rowX, y, nameW, rowH, "Peas", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPeasBatch();
         }
-
-        if (drawButton(0.24f, 0.92f, bw, bh, "Remove peas", label, bg, bt, border))
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removePeasBatch();
         }
