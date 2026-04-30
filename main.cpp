@@ -46,20 +46,24 @@ static void buildUI()
     {
         drawText(0.02f, 0.09f, "UI: toppings, sauce, Bake / Unbake pizza", text);
 
-        if (drawButton(0.02f, 0.56f, bw, bh, "Bake", label, bg, bt, border))
+        const float leftX = 0.02f;
+        const float buttonGap = 0.02f;
+        const float bakeY = 0.90f;
+
+        if (drawButton(leftX, bakeY, bw, bh, "Bake", label, bg, bt, border))
         {
             TextureManager::setBaked(true);
             g_toppings.syncCheeseForBakeState(true);
         }
 
-        if (drawButton(0.24f, 0.56f, bw, bh, "Unbake", label, bg, bt, border))
+        if (drawButton(leftX + bw + buttonGap, bakeY, bw, bh, "Unbake", label, bg, bt, border))
         {
             TextureManager::setBaked(false);
             g_toppings.syncCheeseForBakeState(false);
         }
 
-        const float manageX = 0.02f;
-        const float manageY = 0.65f;
+        const float manageX = leftX;
+        const float manageY = bakeY - bh - 0.02f;
         const float manageW = 0.42f;
         const char *manageLabel = g_showToppingControls ? "Hide topping management" : "Show topping management";
         if (drawButton(manageX, manageY, manageW, bh, manageLabel, label, bg, bt, border))
@@ -72,9 +76,9 @@ static void buildUI()
             return;
         }
 
-        const float rowX = 0.02f;
-        const float rowStartY = 0.74f;
-        const float rowStep = 0.085f;
+        const float rowX = leftX;
+        const float rowStartY = manageY - 0.08f;
+        const float rowStep = 0.08f;
         const float rowH = 0.07f;
         const float nameW = 0.23f;
         const float smallW = 0.055f;
@@ -92,7 +96,7 @@ static void buildUI()
             g_toppings.removeSauce();
         }
 
-        y += rowStep;
+        y -= rowStep;
         drawLabelBox(rowX, y, nameW, rowH, "Cheese", label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -103,7 +107,7 @@ static void buildUI()
             g_toppings.removeCheeseBatch();
         }
 
-        y += rowStep;
+        y -= rowStep;
         drawLabelBox(rowX, y, nameW, rowH, "Pepperoni", label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -114,7 +118,7 @@ static void buildUI()
             g_toppings.removePepperoni();
         }
 
-        y += rowStep;
+        y -= rowStep;
         drawLabelBox(rowX, y, nameW, rowH, "Peas", label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
