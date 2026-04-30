@@ -29,9 +29,10 @@ constexpr float kToppingAboveSauce = 0.003f;
 constexpr float PI = 3.14159265358979323846f;
 } // namespace
 
-ToppingManager::ToppingManager(float pizzaRadius, float pizzaHeight, float crustEdgeRadius)
+ToppingManager::ToppingManager(float pizzaRadius, float pizzaHeight, float crustEdgeRadius, int sliceCount)
     : innerRadius_(std::max(0.01f, pizzaRadius - crustEdgeRadius))
     , pizzaHalfH_(pizzaHeight * 0.5f)
+    , sliceCount_(std::max(1, sliceCount))
     , rng_(std::random_device{}()) {}
 
 ToppingManager::~ToppingManager() {
@@ -218,7 +219,7 @@ void ToppingManager::addSauce() {
 
     const float r = std::max(0.1f, innerRadius_ - kSauceRadiusMargin);
     SceneObject obj{};
-    obj.mesh = new Sauce(r, kSauceLayerHeight, 32);
+    obj.mesh = new Sauce(r, kSauceLayerHeight, 32, sliceCount_);
     obj.position = {0.0f, pizzaHalfH_ + kSauceLayerHeight * 0.5f, 0.0f};
     obj.rotation = {0.0f, 0.0f, 0.0f};
     sauce_.push_back(obj);

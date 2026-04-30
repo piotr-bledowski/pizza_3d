@@ -23,9 +23,10 @@ float g_cuboidHeight = 0.2f;
 float g_cuboidDepth = 0.6f;
 
 constexpr float g_pizzaCrustEdgeRadius = 0.15f;
+constexpr int g_pizzaSliceCount = 6;
 
 SceneManager g_scene;
-ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius);
+ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius, g_pizzaSliceCount);
 bool g_showToppingControls = false;
 int g_cheeseClicks = 0;
 int g_pepperoniClicks = 0;
@@ -185,7 +186,7 @@ int main(int argc, char **argv)
     glutInitWindowSize(800, 600);
     glutCreateWindow("OpenGL Scene");
 
-    g_scene.addObject({new Cylinder(g_radius, g_height, g_segments), {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
+    g_scene.addObject({new Cylinder(g_radius, g_height, g_segments, g_pizzaSliceCount), {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
 
     initGL();
 

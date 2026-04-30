@@ -6,7 +6,7 @@
 
 class ToppingManager {
 public:
-    ToppingManager(float pizzaRadius, float pizzaHeight, float crustEdgeRadius);
+    ToppingManager(float pizzaRadius, float pizzaHeight, float crustEdgeRadius, int sliceCount = 1);
 
     void addCheeseBatch();
     void removeCheeseBatch();
@@ -33,6 +33,7 @@ public:
 private:
     float innerRadius_;
     float pizzaHalfH_;
+    int sliceCount_;
     std::mt19937 rng_;
     std::vector<SceneObject> cheese_;
     std::vector<Vec3> cheeseUnbakedRotation_;
