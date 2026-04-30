@@ -1,4 +1,5 @@
 #pragma once
+#include "../Math/Vec3.h"
 #include "../Scene/SceneObject.h"
 #include <random>
 #include <vector>
@@ -16,6 +17,9 @@ public:
     void addSauce();
     void removeSauce();
 
+    /// When baked: cheese rotations become flat (0). When unbaked: restores saved rotations.
+    void syncCheeseForBakeState(bool baked);
+
     const std::vector<SceneObject>& getCheese() const { return cheese_; }
     const std::vector<SceneObject>& getPepperoni() const { return pepperoni_; }
     const std::vector<SceneObject>& getPeas() const { return peas_; }
@@ -31,6 +35,7 @@ private:
     float pizzaHalfH_;
     std::mt19937 rng_;
     std::vector<SceneObject> cheese_;
+    std::vector<Vec3> cheeseUnbakedRotation_;
     std::vector<SceneObject> pepperoni_;
     std::vector<SceneObject> peas_;
     std::vector<SceneObject> sauce_;
