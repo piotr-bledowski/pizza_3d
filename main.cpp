@@ -1,4 +1,5 @@
 ﻿#include <GL/freeglut.h>
+#include <cstdio>
 #include <vector>
 
 #include "Renderer.h"
@@ -26,6 +27,9 @@ constexpr float g_pizzaCrustEdgeRadius = 0.15f;
 SceneManager g_scene;
 ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius);
 bool g_showToppingControls = false;
+int g_cheeseClicks = 0;
+int g_pepperoniClicks = 0;
+int g_peasClicks = 0;
 
 static void buildUI()
 {
@@ -83,6 +87,10 @@ static void buildUI()
         const float nameW = 0.23f;
         const float smallW = 0.055f;
         const float smallGap = 0.01f;
+        const float counterX = rowX + nameW + smallGap + smallW + smallGap + smallW + 0.02f;
+        const float counterYOffset = 0.045f;
+
+        char counterBuffer[32];
 
         float y = rowStartY;
 
@@ -101,33 +109,45 @@ static void buildUI()
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addCheeseBatch();
+            ++g_cheeseClicks;
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removeCheeseBatch();
+            --g_cheeseClicks;
         }
+        snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_cheeseClicks);
+        drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
         drawLabelBox(rowX, y, nameW, rowH, "Pepperoni", label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPepperoni();
+            ++g_pepperoniClicks;
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removePepperoni();
+            --g_pepperoniClicks;
         }
+        snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_pepperoniClicks);
+        drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
         drawLabelBox(rowX, y, nameW, rowH, "Peas", label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPeasBatch();
+            ++g_peasClicks;
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
             g_toppings.removePeasBatch();
+            --g_peasClicks;
         }
+        snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_peasClicks);
+        drawText(counterX, y + counterYOffset, counterBuffer, text);
     }
 }
 
