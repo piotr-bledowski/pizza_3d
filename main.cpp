@@ -105,6 +105,7 @@ static void buildUI()
             g_toppings.syncCheeseForBakeState(true);
             if (g_pizzaBaseMesh) {
                 g_pizzaBaseMesh->height = g_bakedPizzaHeight;
+                g_pizzaBaseMesh->crustPuff = 1.0f;
             }
             g_toppings.setPizzaHeight(g_bakedPizzaHeight);
         }
@@ -115,6 +116,7 @@ static void buildUI()
             g_toppings.syncCheeseForBakeState(false);
             if (g_pizzaBaseMesh) {
                 g_pizzaBaseMesh->height = g_rawPizzaHeight;
+                g_pizzaBaseMesh->crustPuff = 0.0f;
             }
             g_toppings.setPizzaHeight(g_rawPizzaHeight);
         }
