@@ -111,6 +111,8 @@ void initGL()
 
     // Enable texture mapping
     glEnable(GL_TEXTURE_2D);
+    // Allow glColor to tint textured fragments (used for hover highlighting).
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
 void renderScene()

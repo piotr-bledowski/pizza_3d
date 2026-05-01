@@ -8,7 +8,7 @@ public:
     int segments;
     int sliceCount;
     int hoveredSlice = -1;
-    float hoverLightBoost = 0.10f;
+    float hoverLightBoost = 0.15f;
 
     Sauce(float r, float h, int s, int slices = 1);
     void draw() override;

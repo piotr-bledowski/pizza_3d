@@ -37,8 +37,11 @@ void Cylinder::draw()
 
     for (int slice = 0; slice < slices; ++slice)
     {
-        const bool isHovered = (slices > 1 && hoveredSlice == slice);
-        const float shade = isHovered ? (1.0f + hoverLightBoost) : 1.0f;
+        const bool anyHovered = (slices > 1 && hoveredSlice >= 0);
+        const bool isHovered = anyHovered && (hoveredSlice == slice);
+        // GL clamps vertex color to [0,1] so brightening is invisible.
+        // Dim non-hovered slices instead so the hovered one stands out.
+        const float shade = (!anyHovered || isHovered) ? 1.0f : (1.0f - hoverLightBoost);
         glColor3f(shade, shade, shade);
 
         const float start = slice * sliceAngle + gap;
