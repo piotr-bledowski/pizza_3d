@@ -96,7 +96,21 @@ void mouseMotion(int x, int y)
     lastMouseY = cy;
 }
 
+static bool g_pizzaClickPending = false;
+
+bool consumePizzaClick()
+{
+    if (g_pizzaClickPending) {
+        g_pizzaClickPending = false;
+        return true;
+    }
+    return false;
+}
+
 void mouseButton(int button, int state, int x, int y)
 {
     uiOnMouseClick(x, y, button, state);
+    if (g_controlMode == ControlMode::UI && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        g_pizzaClickPending = true;
+    }
 }

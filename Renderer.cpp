@@ -115,6 +115,13 @@ void initGL()
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
+static int s_hoveredSlice = -1;
+
+int getHoveredSlice()
+{
+    return s_hoveredSlice;
+}
+
 void renderScene()
 {
     updateCamera();
@@ -124,7 +131,6 @@ void renderScene()
 
     applyCameraView();
 
-    int hoveredSlice = -1;
     if (getControlMode() == ControlMode::UI)
     {
         int mx = 0;
@@ -136,10 +142,14 @@ void renderScene()
         {
             if (const auto* cyl = dynamic_cast<Cylinder*>(obj.mesh))
             {
-                hoveredSlice = computeHoveredSlice(*cyl, mx, my, winW, winH);
+                s_hoveredSlice = computeHoveredSlice(*cyl, mx, my, winW, winH);
                 break;
             }
         }
+    }
+    else
+    {
+        s_hoveredSlice = -1;
     }
 
     // Render all objects
@@ -166,11 +176,11 @@ void renderScene()
 
         if (auto* c = dynamic_cast<Cylinder*>(drawMesh))
         {
-            c->hoveredSlice = (c->sliceCount > 1) ? hoveredSlice : -1;
+            c->hoveredSlice = (c->sliceCount > 1) ? s_hoveredSlice : -1;
         }
         if (auto* s = dynamic_cast<Sauce*>(drawMesh))
         {
-            s->hoveredSlice = (s->sliceCount > 1) ? hoveredSlice : -1;
+            s->hoveredSlice = (s->sliceCount > 1) ? s_hoveredSlice : -1;
         }
         drawMesh->draw();
 

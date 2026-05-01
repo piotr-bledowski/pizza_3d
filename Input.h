@@ -6,6 +6,7 @@ enum class ControlMode { Camera, UI };
 
 ControlMode getControlMode();
 void getMousePosition(int& x, int& y);
+bool consumePizzaClick();
 
 void keyDown(unsigned char key, int x, int y);
 void keyUp(unsigned char key, int x, int y);

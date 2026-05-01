@@ -48,6 +48,12 @@ void Cylinder::draw()
         const float end = (slice + 1) * sliceAngle - gap;
         const float step = (end - start) / static_cast<float>(segPerSlice);
 
+        // Translate this slice radially if it has been pulled out.
+        const float midAngle = (slice + 0.5f) * sliceAngle;
+        const float slideAmt = (slice < 16) ? sliceOffsets[slice] : 0.0f;
+        glPushMatrix();
+        glTranslatef(std::cos(midAngle) * slideAmt, 0.0f, std::sin(midAngle) * slideAmt);
+
         // ── Flat inner top face ──────────────────────────────────────────
         glBegin(GL_TRIANGLE_FAN);
         glTexCoord2f(0.5f, 0.5f);
@@ -189,6 +195,8 @@ void Cylinder::draw()
                 }
             }
         }
+
+        glPopMatrix();
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
