@@ -16,7 +16,7 @@
 #include "UI/UI.h"
 
 float g_radius = 2.5f;
-float g_height = 0.3f;
+float g_height = 0.15f;
 int g_segments = 32;
 float g_cubeSize = 0.5f;
 float g_cuboidWidth = 0.4f;
