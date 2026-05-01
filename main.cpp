@@ -25,9 +25,11 @@ float g_cuboidDepth = 0.6f;
 
 constexpr float g_pizzaCrustEdgeRadius = 0.15f;
 constexpr int g_defaultPizzaSliceCount = 6;
+const float g_bakedPizzaHeight = g_height;
+const float g_rawPizzaHeight = g_height * 0.5f;
 
 SceneManager g_scene;
-ToppingManager g_toppings(g_radius, g_height, g_pizzaCrustEdgeRadius, 1);
+ToppingManager g_toppings(g_radius, g_rawPizzaHeight, g_pizzaCrustEdgeRadius, 1);
 Cylinder *g_pizzaBaseMesh = nullptr;
 bool g_showToppingControls = false;
 bool g_isSliced = false;
@@ -101,12 +103,22 @@ static void buildUI()
         {
             TextureManager::setBaked(true);
             g_toppings.syncCheeseForBakeState(true);
+            if (g_pizzaBaseMesh) {
+                g_pizzaBaseMesh->height = g_bakedPizzaHeight;
+                g_pizzaBaseMesh->crustPuff = 1.0f;
+            }
+            g_toppings.setPizzaHeight(g_bakedPizzaHeight);
         }
 
         if (drawButton(leftX + bw + buttonGap, bakeY, bw, bh, "Unbake", label, bg, bt, border))
         {
             TextureManager::setBaked(false);
             g_toppings.syncCheeseForBakeState(false);
+            if (g_pizzaBaseMesh) {
+                g_pizzaBaseMesh->height = g_rawPizzaHeight;
+                g_pizzaBaseMesh->crustPuff = 0.0f;
+            }
+            g_toppings.setPizzaHeight(g_rawPizzaHeight);
         }
 
         if (!g_showToppingControls)
@@ -217,7 +229,7 @@ int main(int argc, char **argv)
     glutInitWindowSize(800, 600);
     glutCreateWindow("OpenGL Scene");
 
-    g_pizzaBaseMesh = new Cylinder(g_radius, g_height, g_segments, 1);
+    g_pizzaBaseMesh = new Cylinder(g_radius, g_rawPizzaHeight, g_segments, 1);
     g_scene.addObject({g_pizzaBaseMesh, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
 
     initGL();
