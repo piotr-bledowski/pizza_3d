@@ -1,14 +1,91 @@
 #include "Renderer.h"
 #include "Camera.h"
+#include "Input.h"
 #include "Scene/SceneObject.h"
 #include "Mesh/Mesh.h"
+#include "Mesh/Cylinder.h"
+#include "Mesh/Sauce.h"
 #include "Texture/TextureManager.h"
 #include "UI/UI.h"
 #include <GL/freeglut.h>
+#include <cmath>
 #include <vector>
 
 // Internal scene storage
 static std::vector<SceneObject> g_objects;
+
+namespace {
+constexpr float PI = 3.14159265358979323846f;
+
+int computeHoveredSlice(const Cylinder& pizza, int mouseX, int mouseY, int winW, int winH)
+{
+    if (pizza.sliceCount <= 1 || winW <= 0 || winH <= 0)
+    {
+        return -1;
+    }
+
+    GLdouble model[16];
+    GLdouble proj[16];
+    GLint viewport[4];
+    glGetDoublev(GL_MODELVIEW_MATRIX, model);
+    glGetDoublev(GL_PROJECTION_MATRIX, proj);
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    const GLdouble sx = static_cast<GLdouble>(mouseX);
+    const GLdouble sy = static_cast<GLdouble>(winH - mouseY);
+    GLdouble ox, oy, oz;
+    GLdouble fx, fy, fz;
+    if (gluUnProject(sx, sy, 0.0, model, proj, viewport, &ox, &oy, &oz) != GL_TRUE)
+    {
+        return -1;
+    }
+    if (gluUnProject(sx, sy, 1.0, model, proj, viewport, &fx, &fy, &fz) != GL_TRUE)
+    {
+        return -1;
+    }
+
+    const double dx = fx - ox;
+    const double dy = fy - oy;
+    const double dz = fz - oz;
+    if (std::abs(dy) < 1e-6)
+    {
+        return -1;
+    }
+
+    // Pizza lives at y=0 in world space.
+    const double t = -oy / dy;
+    if (t <= 0.0)
+    {
+        return -1;
+    }
+
+    const double hx = ox + dx * t;
+    const double hz = oz + dz * t;
+    const double dist = std::sqrt(hx * hx + hz * hz);
+    if (dist > static_cast<double>(pizza.radius))
+    {
+        return -1;
+    }
+
+    double theta = std::atan2(hz, hx);
+    if (theta < 0.0)
+    {
+        theta += 2.0 * PI;
+    }
+
+    const int slices = pizza.sliceCount;
+    const double sliceAngle = (2.0 * PI) / static_cast<double>(slices);
+    const double gap = 0.012;
+    const int idx = static_cast<int>(theta / sliceAngle);
+    const double start = static_cast<double>(idx) * sliceAngle + gap;
+    const double end = static_cast<double>(idx + 1) * sliceAngle - gap;
+    if (theta < start || theta > end)
+    {
+        return -1;
+    }
+    return idx;
+}
+} // namespace
 
 void setScene(const std::vector<SceneObject> &objects)
 {
@@ -45,6 +122,24 @@ void renderScene()
 
     applyCameraView();
 
+    int hoveredSlice = -1;
+    if (getControlMode() == ControlMode::UI)
+    {
+        int mx = 0;
+        int my = 0;
+        getMousePosition(mx, my);
+        const int winW = glutGet(GLUT_WINDOW_WIDTH);
+        const int winH = glutGet(GLUT_WINDOW_HEIGHT);
+        for (const auto& obj : g_objects)
+        {
+            if (const auto* cyl = dynamic_cast<Cylinder*>(obj.mesh))
+            {
+                hoveredSlice = computeHoveredSlice(*cyl, mx, my, winW, winH);
+                break;
+            }
+        }
+    }
+
     // Render all objects
     for (const auto &obj : g_objects)
     {
@@ -65,6 +160,15 @@ void renderScene()
             {
                 drawMesh = sub;
             }
+        }
+
+        if (auto* c = dynamic_cast<Cylinder*>(drawMesh))
+        {
+            c->hoveredSlice = (c->sliceCount > 1) ? hoveredSlice : -1;
+        }
+        if (auto* s = dynamic_cast<Sauce*>(drawMesh))
+        {
+            s->hoveredSlice = (s->sliceCount > 1) ? hoveredSlice : -1;
         }
         drawMesh->draw();
 

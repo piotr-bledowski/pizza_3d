@@ -21,6 +21,12 @@ ControlMode getControlMode()
     return g_controlMode;
 }
 
+void getMousePosition(int& x, int& y)
+{
+    x = lastMouseX;
+    y = lastMouseY;
+}
+
 static void toggleControlMode()
 {
     g_controlMode = (g_controlMode == ControlMode::Camera) ? ControlMode::UI : ControlMode::Camera;

@@ -22,6 +22,10 @@ void Sauce::draw() {
     const int segmentsPerSlice = std::max(2, segments / slices);
 
     for (int slice = 0; slice < slices; ++slice) {
+        const bool isHovered = (slices > 1 && hoveredSlice == slice);
+        const float shade = isHovered ? (1.0f + hoverLightBoost) : 1.0f;
+        glColor3f(shade, shade, shade);
+
         const float start = slice * sliceAngle + gap;
         const float end = (slice + 1) * sliceAngle - gap;
         const float step = (end - start) / static_cast<float>(segmentsPerSlice);
@@ -83,5 +87,6 @@ void Sauce::draw() {
         }
     }
 
+    glColor3f(1.0f, 1.0f, 1.0f);
     glDisable(GL_TEXTURE_2D);
 }
