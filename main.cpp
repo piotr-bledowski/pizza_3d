@@ -38,6 +38,12 @@ int g_cheeseClicks = 0;
 int g_pepperoniClicks = 0;
 int g_peasClicks = 0;
 
+// Slice pull-out state
+constexpr float kSlideDistance = 0.55f;
+constexpr float kSlideSpeed    = 0.14f;
+static bool  g_sliceSelected[16]     = {};
+static float g_sliceCurrentOffset[16] = {};
+
 static void buildUI()
 {
     Color4 text{1.0f, 1.0f, 1.0f, 1.0f};
@@ -80,6 +86,7 @@ static void buildUI()
         if (drawButton(leftX + bw + buttonGap, sliceY, bw, bh, "Unslice", label, bg, bt, border))
         {
             g_isSliced = false;
+            for (int i = 0; i < 16; ++i) g_sliceSelected[i] = false;
         }
         if (drawButton(leftX + bw + buttonGap + bw + buttonGap, sliceY, smallW, bh, "-", label, bg, bt, border))
         {
@@ -195,6 +202,37 @@ static void buildUI()
     }
 }
 
+static void tickSliceAnimation()
+{
+    // Toggle selection on click if hovered over a slice.
+    if (consumePizzaClick()) {
+        const int hs = getHoveredSlice();
+        if (hs >= 0 && hs < 16 && g_isSliced) {
+            g_sliceSelected[hs] = !g_sliceSelected[hs];
+        }
+    }
+
+    // Smoothly animate each slice offset toward its target.
+    for (int i = 0; i < 16; ++i) {
+        const bool sel = g_isSliced && (i < g_sliceCount) && g_sliceSelected[i];
+        const float target = sel ? kSlideDistance : 0.0f;
+        g_sliceCurrentOffset[i] += (target - g_sliceCurrentOffset[i]) * kSlideSpeed;
+        if (std::abs(g_sliceCurrentOffset[i]) < 0.001f && target == 0.0f) {
+            g_sliceCurrentOffset[i] = 0.0f;
+        }
+    }
+
+    // Push offsets into the pizza base mesh.
+    if (g_pizzaBaseMesh) {
+        for (int i = 0; i < 16; ++i) {
+            g_pizzaBaseMesh->sliceOffsets[i] = g_sliceCurrentOffset[i];
+        }
+    }
+
+    // Propagate to sauce and individual toppings.
+    g_toppings.syncSliceOffsets(g_sliceCurrentOffset);
+}
+
 static void updateScene()
 {
     const std::vector<SceneObject> &base = g_scene.getObjects();
@@ -218,6 +256,7 @@ void displayWrapper()
     uiBeginFrame();
     buildUI();
     uiEndFrameClicks();
+    tickSliceAnimation();
     updateScene();
     renderScene();
 }

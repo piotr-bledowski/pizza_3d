@@ -118,6 +118,8 @@ void ToppingManager::addCheeseBatch() {
             obj.rotation = unbakedRot;
         }
         cheeseUnbakedRotation_.push_back(unbakedRot);
+        cheeseBaseX_.push_back(x);
+        cheeseBaseZ_.push_back(z);
         cheese_.push_back(obj);
     }
 }
@@ -127,6 +129,7 @@ void ToppingManager::removeCheeseBatch() {
         delete cheese_.back().mesh;
         cheese_.pop_back();
         cheeseUnbakedRotation_.pop_back();
+        if (!cheeseBaseX_.empty()) { cheeseBaseX_.pop_back(); cheeseBaseZ_.pop_back(); }
     }
 }
 
@@ -164,6 +167,8 @@ void ToppingManager::addPepperoni() {
     const float lift = ph * 0.5f;
     obj.position = {px, surfaceYForToppings() + lift, pz};
     obj.rotation = {0.0f, rotY(rng_), 0.0f};
+    pepperoniBaseX_.push_back(px);
+    pepperoniBaseZ_.push_back(pz);
     pepperoni_.push_back(obj);
 }
 
@@ -173,6 +178,7 @@ void ToppingManager::removePepperoni() {
     }
     delete pepperoni_.back().mesh;
     pepperoni_.pop_back();
+    if (!pepperoniBaseX_.empty()) { pepperoniBaseX_.pop_back(); pepperoniBaseZ_.pop_back(); }
 }
 
 void ToppingManager::addPeasBatch() {
@@ -192,6 +198,8 @@ void ToppingManager::addPeasBatch() {
         obj.mesh = new Pea(pr, kPeaSphereSlices, kPeaSphereStacks);
         obj.position = {x, y, z};
         obj.rotation = {rotDist(rng_), rotDist(rng_), rotDist(rng_)};
+        peasBaseX_.push_back(x);
+        peasBaseZ_.push_back(z);
         peas_.push_back(obj);
     }
 }
@@ -200,6 +208,7 @@ void ToppingManager::removePeasBatch() {
     for (int k = 0; k < kPeasPerClick && !peas_.empty(); ++k) {
         delete peas_.back().mesh;
         peas_.pop_back();
+        if (!peasBaseX_.empty()) { peasBaseX_.pop_back(); peasBaseZ_.pop_back(); }
     }
 }
 
@@ -252,6 +261,41 @@ void ToppingManager::setSliceCount(int sliceCount) {
             sauceMesh->sliceCount = sliceCount_;
         }
     }
+}
+
+void ToppingManager::syncSliceOffsets(const float offsets[16]) {
+    // Propagate offsets to the Sauce mesh draw loop.
+    for (auto& o : sauce_) {
+        if (auto* s = dynamic_cast<Sauce*>(o.mesh)) {
+            for (int i = 0; i < 16; ++i) {
+                s->sliceOffsets[i] = offsets[i];
+            }
+        }
+    }
+
+    if (sliceCount_ <= 1) {
+        return; // no slicing active, toppings stay put
+    }
+
+    const float sliceAngle = 2.0f * PI / static_cast<float>(sliceCount_);
+
+    auto applyOffsets = [&](std::vector<SceneObject>& objs,
+                            const std::vector<float>& bx,
+                            const std::vector<float>& bz) {
+        for (size_t i = 0; i < objs.size() && i < bx.size(); ++i) {
+            float theta = std::atan2(bz[i], bx[i]);
+            if (theta < 0.0f) theta += 2.0f * PI;
+            const int idx = std::min(sliceCount_ - 1, (int)(theta / sliceAngle));
+            const float midAngle = (idx + 0.5f) * sliceAngle;
+            const float slideAmt = (idx < 16) ? offsets[idx] : 0.0f;
+            objs[i].position.x = bx[i] + std::cos(midAngle) * slideAmt;
+            objs[i].position.z = bz[i] + std::sin(midAngle) * slideAmt;
+        }
+    };
+
+    applyOffsets(cheese_, cheeseBaseX_, cheeseBaseZ_);
+    applyOffsets(pepperoni_, pepperoniBaseX_, pepperoniBaseZ_);
+    applyOffsets(peas_, peasBaseX_, peasBaseZ_);
 }
 
 void ToppingManager::setPizzaHeight(float pizzaHeight) {

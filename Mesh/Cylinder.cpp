@@ -37,9 +37,22 @@ void Cylinder::draw()
 
     for (int slice = 0; slice < slices; ++slice)
     {
+        const bool anyHovered = (slices > 1 && hoveredSlice >= 0);
+        const bool isHovered = anyHovered && (hoveredSlice == slice);
+        // GL clamps vertex color to [0,1] so brightening is invisible.
+        // Dim non-hovered slices instead so the hovered one stands out.
+        const float shade = (!anyHovered || isHovered) ? 1.0f : (1.0f - hoverLightBoost);
+        glColor3f(shade, shade, shade);
+
         const float start = slice * sliceAngle + gap;
         const float end = (slice + 1) * sliceAngle - gap;
         const float step = (end - start) / static_cast<float>(segPerSlice);
+
+        // Translate this slice radially if it has been pulled out.
+        const float midAngle = (slice + 0.5f) * sliceAngle;
+        const float slideAmt = (slice < 16) ? sliceOffsets[slice] : 0.0f;
+        glPushMatrix();
+        glTranslatef(std::cos(midAngle) * slideAmt, 0.0f, std::sin(midAngle) * slideAmt);
 
         // ── Flat inner top face ──────────────────────────────────────────
         glBegin(GL_TRIANGLE_FAN);
@@ -182,7 +195,10 @@ void Cylinder::draw()
                 }
             }
         }
+
+        glPopMatrix();
     }
 
+    glColor3f(1.0f, 1.0f, 1.0f);
     glDisable(GL_TEXTURE_2D);
 }

@@ -18,6 +18,8 @@ public:
     void removeSauce();
     void setSliceCount(int sliceCount);
     void setPizzaHeight(float pizzaHeight);
+    // Called every frame to propagate per-slice slide offsets.
+    void syncSliceOffsets(const float offsets[16]);
 
     /// When baked: cheese rotations become flat (0). When unbaked: restores saved rotations.
     void syncCheeseForBakeState(bool baked);
@@ -39,8 +41,11 @@ private:
     std::mt19937 rng_;
     std::vector<SceneObject> cheese_;
     std::vector<Vec3> cheeseUnbakedRotation_;
+    std::vector<float> cheeseBaseX_, cheeseBaseZ_;
     std::vector<SceneObject> pepperoni_;
+    std::vector<float> pepperoniBaseX_, pepperoniBaseZ_;
     std::vector<SceneObject> peas_;
+    std::vector<float> peasBaseX_, peasBaseZ_;
     std::vector<SceneObject> sauce_;
 
     float surfaceYForToppings() const;

@@ -22,9 +22,19 @@ void Sauce::draw() {
     const int segmentsPerSlice = std::max(2, segments / slices);
 
     for (int slice = 0; slice < slices; ++slice) {
+        const bool anyHovered = (slices > 1 && hoveredSlice >= 0);
+        const bool isHovered  = anyHovered && (hoveredSlice == slice);
+        const float shade = (!anyHovered || isHovered) ? 1.0f : (1.0f - hoverLightBoost);
+        glColor3f(shade, shade, shade);
+
         const float start = slice * sliceAngle + gap;
         const float end = (slice + 1) * sliceAngle - gap;
         const float step = (end - start) / static_cast<float>(segmentsPerSlice);
+
+        const float midAngle = (slice + 0.5f) * sliceAngle;
+        const float slideAmt = (slice < 16) ? sliceOffsets[slice] : 0.0f;
+        glPushMatrix();
+        glTranslatef(std::cos(midAngle) * slideAmt, 0.0f, std::sin(midAngle) * slideAmt);
 
         glBegin(GL_TRIANGLE_FAN);
         glTexCoord2f(0.5f, 0.5f);
@@ -81,7 +91,10 @@ void Sauce::draw() {
                 glEnd();
             }
         }
+
+        glPopMatrix();
     }
 
+    glColor3f(1.0f, 1.0f, 1.0f);
     glDisable(GL_TEXTURE_2D);
 }
