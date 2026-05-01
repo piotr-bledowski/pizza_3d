@@ -24,8 +24,9 @@ constexpr float kCheeseDimMin = 0.035f;
 constexpr float kCheeseDimMax = 0.095f;
 constexpr float kPlacementMargin = 0.04f;
 constexpr float kSauceLayerHeight = 0.012f;
-constexpr float kSauceRadiusMargin = 0.08f;
+constexpr float kSauceRadiusMargin = 0.10f;
 constexpr float kToppingAboveSauce = 0.003f;
+constexpr float kToppingEdgeInset = 0.05f;
 constexpr float PI = 3.14159265358979323846f;
 } // namespace
 
@@ -73,7 +74,7 @@ bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
 
 bool ToppingManager::tryPlacePepperoni(float& outX, float& outZ, float r) {
     std::uniform_real_distribution<float> u01(0.0f, 1.0f);
-    const float maxR = std::max(0.05f, innerRadius_ - r - kPlacementMargin);
+    const float maxR = std::max(0.05f, innerRadius_ - r - kPlacementMargin - kToppingEdgeInset);
     for (int attempt = 0; attempt < kPepperoniMaxAttempts; ++attempt) {
         const float t = u01(rng_) * 2.0f * PI;
         const float rad = maxR * std::sqrt(u01(rng_));
@@ -99,7 +100,7 @@ void ToppingManager::addCheeseBatch() {
         const float d = dimDist(rng_);
 
         const float t = u01(rng_) * 2.0f * PI;
-        const float rad = std::max(0.01f, innerRadius_ - 0.02f) * std::sqrt(u01(rng_));
+        const float rad = std::max(0.01f, innerRadius_ - kToppingEdgeInset) * std::sqrt(u01(rng_));
         const float x = rad * std::cos(t);
         const float z = rad * std::sin(t);
 
@@ -182,7 +183,7 @@ void ToppingManager::addPeasBatch() {
     for (int i = 0; i < kPeasPerClick; ++i) {
         const float pr = radDist(rng_);
         const float t = u01(rng_) * 2.0f * PI;
-        const float rad = std::max(0.01f, innerRadius_ - pr - 0.02f) * std::sqrt(u01(rng_));
+        const float rad = std::max(0.01f, innerRadius_ - pr - kToppingEdgeInset) * std::sqrt(u01(rng_));
         const float x = rad * std::cos(t);
         const float z = rad * std::sin(t);
         const float y = surfaceYForToppings() + pr;
@@ -250,5 +251,28 @@ void ToppingManager::setSliceCount(int sliceCount) {
         if (auto* sauceMesh = dynamic_cast<Sauce*>(o.mesh)) {
             sauceMesh->sliceCount = sliceCount_;
         }
+    }
+}
+
+void ToppingManager::setPizzaHeight(float pizzaHeight) {
+    const float newHalfH = pizzaHeight * 0.5f;
+    const float deltaY = newHalfH - pizzaHalfH_;
+    if (std::abs(deltaY) < 1e-6f) {
+        return;
+    }
+
+    pizzaHalfH_ = newHalfH;
+
+    for (auto& o : sauce_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : cheese_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : pepperoni_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : peas_) {
+        o.position.y += deltaY;
     }
 }
