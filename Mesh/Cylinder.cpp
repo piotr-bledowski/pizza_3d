@@ -18,8 +18,9 @@ void Cylinder::draw()
 {
     TextureManager::bindPizzaTexture();
 
-    float halfH = height * 0.5f;
-    float innerR = radius - g_edgeRadius;
+    const float halfH = height * 0.5f;
+    const float edgeR = std::min(g_edgeRadius, halfH);
+    const float innerR = radius - edgeR;
     const int slices = sliceCount > 1 ? sliceCount : 1;
     const float sliceAngle = 2.0f * PI / static_cast<float>(slices);
     const float gap = slices > 1 ? 0.012f : 0.0f;
@@ -73,13 +74,13 @@ void Cylinder::draw()
                 float cx = cos(theta) * innerR;
                 float cz = sin(theta) * innerR;
 
-                float x0 = cx + cos(theta) * cos(phi0) * g_edgeRadius;
-                float y0 = sin(phi0) * g_edgeRadius;
-                float z0 = cz + sin(theta) * cos(phi0) * g_edgeRadius;
+                float x0 = cx + cos(theta) * cos(phi0) * edgeR;
+                float y0 = sin(phi0) * edgeR;
+                float z0 = cz + sin(theta) * cos(phi0) * edgeR;
 
-                float x1 = cx + cos(theta) * cos(phi1) * g_edgeRadius;
-                float y1 = sin(phi1) * g_edgeRadius;
-                float z1 = cz + sin(theta) * cos(phi1) * g_edgeRadius;
+                float x1 = cx + cos(theta) * cos(phi1) * edgeR;
+                float y1 = sin(phi1) * edgeR;
+                float z1 = cz + sin(theta) * cos(phi1) * edgeR;
 
                 glTexCoord2f((float)i / segmentsPerSlice, 0.3f + 0.7f * (j / (float)g_edgeSegments));
                 glVertex3f(x0, y0, z0);
@@ -117,10 +118,10 @@ void Cylinder::draw()
                     const float phi0 = (j / static_cast<float>(g_edgeSegments)) * PI - PI * 0.5f;
                     const float phi1 = ((j + 1) / static_cast<float>(g_edgeSegments)) * PI - PI * 0.5f;
 
-                    const float r0 = innerR + cos(phi0) * g_edgeRadius;
-                    const float y0 = sin(phi0) * g_edgeRadius;
-                    const float r1 = innerR + cos(phi1) * g_edgeRadius;
-                    const float y1 = sin(phi1) * g_edgeRadius;
+                    const float r0 = innerR + cos(phi0) * edgeR;
+                    const float y0 = sin(phi0) * edgeR;
+                    const float r1 = innerR + cos(phi1) * edgeR;
+                    const float y1 = sin(phi1) * edgeR;
 
                     glBegin(GL_QUADS);
                     glTexCoord2f(0.0f, j / static_cast<float>(g_edgeSegments));

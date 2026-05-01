@@ -252,3 +252,26 @@ void ToppingManager::setSliceCount(int sliceCount) {
         }
     }
 }
+
+void ToppingManager::setPizzaHeight(float pizzaHeight) {
+    const float newHalfH = pizzaHeight * 0.5f;
+    const float deltaY = newHalfH - pizzaHalfH_;
+    if (std::abs(deltaY) < 1e-6f) {
+        return;
+    }
+
+    pizzaHalfH_ = newHalfH;
+
+    for (auto& o : sauce_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : cheese_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : pepperoni_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : peas_) {
+        o.position.y += deltaY;
+    }
+}
