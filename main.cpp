@@ -38,6 +38,7 @@ int g_cheeseClicks = 0;
 int g_pepperoniClicks = 0;
 int g_peasClicks = 0;
 int g_pineappleClicks = 0;
+int g_redOnionClicks = 0;
 
 // Slice pull-out state
 constexpr float kSlideDistance = 0.55f;
@@ -219,6 +220,21 @@ static void buildUI()
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_pineappleClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);
+
+        y -= rowStep;
+        drawLabelBox(rowX, y, nameW, rowH, "Red onion", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
+        {
+            g_toppings.addRedOnionBatch();
+            ++g_redOnionClicks;
+        }
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
+        {
+            g_toppings.removeRedOnionBatch();
+            --g_redOnionClicks;
+        }
+        snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_redOnionClicks);
+        drawText(counterX, y + counterYOffset, counterBuffer, text);
     }
 }
 
@@ -267,15 +283,17 @@ static void updateScene()
     const std::vector<SceneObject> &pep = g_toppings.getPepperoni();
     const std::vector<SceneObject> &peas = g_toppings.getPeas();
     const std::vector<SceneObject> &pineapple = g_toppings.getPineapple();
+    const std::vector<SceneObject> &redOnion = g_toppings.getRedOnion();
 
     std::vector<SceneObject> all;
-    all.reserve(base.size() + sauce.size() + cheese.size() + pep.size() + peas.size() + pineapple.size());
+    all.reserve(base.size() + sauce.size() + cheese.size() + pep.size() + peas.size() + pineapple.size() + redOnion.size());
     all.insert(all.end(), base.begin(), base.end());
     all.insert(all.end(), sauce.begin(), sauce.end());
     all.insert(all.end(), cheese.begin(), cheese.end());
     all.insert(all.end(), pep.begin(), pep.end());
     all.insert(all.end(), peas.begin(), peas.end());
     all.insert(all.end(), pineapple.begin(), pineapple.end());
+    all.insert(all.end(), redOnion.begin(), redOnion.end());
     setScene(all);
 }
 

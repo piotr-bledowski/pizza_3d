@@ -3,6 +3,7 @@
 #include "../Mesh/Pea.h"
 #include "../Mesh/Pepperoni.h"
 #include "../Mesh/PineappleRing.h"
+#include "../Mesh/RedOnionWedge.h"
 #include "../Mesh/Sauce.h"
 #include "../Texture/TextureManager.h"
 #include <algorithm>
@@ -36,6 +37,9 @@ constexpr float kPineappleOuterRadius = 0.315f;
 constexpr float kPineappleInnerRadius = 0.117f;
 constexpr float kPineappleThickness = 0.02175f;
 constexpr int kPineappleRingSegs = 32;
+constexpr int kRedOnionPerClick = 10;
+constexpr int kRedOnionMaxAttempts = 80;
+constexpr int kRedOnionArcSegs = 10;
 constexpr float PI = 3.14159265358979323846f;
 } // namespace
 
@@ -56,6 +60,9 @@ ToppingManager::~ToppingManager() {
         delete o.mesh;
     }
     for (auto& o : pineapple_) {
+        delete o.mesh;
+    }
+    for (auto& o : redOnion_) {
         delete o.mesh;
     }
     for (auto& o : sauce_) {
@@ -91,6 +98,16 @@ bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
             return true;
         }
     }
+    for (const auto& o : redOnion_) {
+        const float dx = x - o.position.x;
+        const float dz = z - o.position.z;
+        const float dist = std::sqrt(dx * dx + dz * dz);
+        const auto* wedge = static_cast<const RedOnionWedge*>(o.mesh);
+        const float otherR = wedge ? wedge->outerRadius : 0.12f;
+        if (dist < r + otherR + kPlacementMargin) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -115,6 +132,23 @@ bool ToppingManager::tryPlacePineapple(float& outX, float& outZ, float footprint
     std::uniform_real_distribution<float> u01(0.0f, 1.0f);
     const float maxR = std::max(0.05f, innerRadius_ - footprintR - kPlacementMargin - kToppingEdgeInset);
     for (int attempt = 0; attempt < kPineappleMaxAttempts; ++attempt) {
+        const float t = u01(rng_) * 2.0f * PI;
+        const float rad = maxR * std::sqrt(u01(rng_));
+        const float x = rad * std::cos(t);
+        const float z = rad * std::sin(t);
+        if (!pepperoniOverlaps(x, z, footprintR)) {
+            outX = x;
+            outZ = z;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ToppingManager::tryPlaceRedOnion(float& outX, float& outZ, float footprintR) {
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    const float maxR = std::max(0.05f, innerRadius_ - footprintR - kPlacementMargin - kToppingEdgeInset);
+    for (int attempt = 0; attempt < kRedOnionMaxAttempts; ++attempt) {
         const float t = u01(rng_) * 2.0f * PI;
         const float rad = maxR * std::sqrt(u01(rng_));
         const float x = rad * std::cos(t);
@@ -289,6 +323,48 @@ void ToppingManager::removePineappleBatch() {
     }
 }
 
+void ToppingManager::addRedOnionBatch() {
+    // Tube geometry: outerR - innerR is the tube diameter (thin strip), so keep it small.
+    // outerR and innerR are measured from the piece's local origin (placed randomly on pizza).
+    std::uniform_real_distribution<float> outerDist(0.095f, 0.125f);
+    std::uniform_real_distribution<float> stripWidthDist(0.010f, 0.015f); // radial width (thin)
+    std::uniform_real_distribution<float> wedgeDist(1.10f, 1.55f);       // arc span in radians (long crescent)
+    std::uniform_real_distribution<float> thickDist(0.040f, 0.058f);     // vertical height (tall, flattened cross-section)
+
+    for (int i = 0; i < kRedOnionPerClick; ++i) {
+        const float outerR = outerDist(rng_);
+        const float innerR = outerR - stripWidthDist(rng_);
+        const float wedge = wedgeDist(rng_);
+        const float thick = thickDist(rng_);
+
+        float px = 0.0f;
+        float pz = 0.0f;
+        if (!tryPlaceRedOnion(px, pz, outerR)) {
+            return;
+        }
+
+        SceneObject obj{};
+        obj.mesh = new RedOnionWedge(outerR, innerR, wedge, thick, kRedOnionArcSegs);
+        const float lift = thick * 0.5f;
+        obj.position = {px, surfaceYForToppings() + lift, pz};
+        obj.rotation = {0.0f, std::atan2(px, pz) * (180.0f / PI), 0.0f};
+        redOnionBaseX_.push_back(px);
+        redOnionBaseZ_.push_back(pz);
+        redOnion_.push_back(obj);
+    }
+}
+
+void ToppingManager::removeRedOnionBatch() {
+    for (int k = 0; k < kRedOnionPerClick && !redOnion_.empty(); ++k) {
+        delete redOnion_.back().mesh;
+        redOnion_.pop_back();
+        if (!redOnionBaseX_.empty()) {
+            redOnionBaseX_.pop_back();
+            redOnionBaseZ_.pop_back();
+        }
+    }
+}
+
 void ToppingManager::addSauce() {
     if (!sauce_.empty()) {
         return;
@@ -304,6 +380,9 @@ void ToppingManager::addSauce() {
         o.position.y += delta;
     }
     for (auto& o : pineapple_) {
+        o.position.y += delta;
+    }
+    for (auto& o : redOnion_) {
         o.position.y += delta;
     }
 
@@ -330,6 +409,9 @@ void ToppingManager::removeSauce() {
         o.position.y -= delta;
     }
     for (auto& o : pineapple_) {
+        o.position.y -= delta;
+    }
+    for (auto& o : redOnion_) {
         o.position.y -= delta;
     }
 
@@ -380,6 +462,7 @@ void ToppingManager::syncSliceOffsets(const float offsets[16]) {
     applyOffsets(pepperoni_, pepperoniBaseX_, pepperoniBaseZ_);
     applyOffsets(peas_, peasBaseX_, peasBaseZ_);
     applyOffsets(pineapple_, pineappleBaseX_, pineappleBaseZ_);
+    applyOffsets(redOnion_, redOnionBaseX_, redOnionBaseZ_);
 }
 
 void ToppingManager::setPizzaHeight(float pizzaHeight) {
@@ -404,6 +487,9 @@ void ToppingManager::setPizzaHeight(float pizzaHeight) {
         o.position.y += deltaY;
     }
     for (auto& o : pineapple_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : redOnion_) {
         o.position.y += deltaY;
     }
 }

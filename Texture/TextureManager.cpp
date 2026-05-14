@@ -10,6 +10,7 @@ unsigned int TextureManager::g_sauceTextureID = 0;
 unsigned int TextureManager::g_pepperoniTextureID = 0;
 unsigned int TextureManager::g_cheeseTextureID = 0;
 unsigned int TextureManager::g_pineappleTextureID = 0;
+unsigned int TextureManager::g_redOnionTextureID = 0;
 bool TextureManager::g_baked = false;
 
 namespace {
@@ -426,6 +427,60 @@ void TextureManager::generatePineappleTexture()
     uploadRgbTexture(g_pineappleTextureID, width, height, textureData.data());
 }
 
+void TextureManager::generateRedOnionTexture()
+{
+    // Texture layout: U (x) = along arc, V (y) = radial position.
+    // V=0 → inner edge → white/cream onion flesh.
+    // V=1 → outer edge → deep purple skin.
+    // This matches the UV mapping in RedOnionWedge::draw().
+    const bool baked = g_baked;
+    constexpr int width = 256;
+    constexpr int height = 256;
+    const int n = width * height;
+
+    // Inner (white) colour
+    const float whtR = baked ? 0.76f : 0.92f;
+    const float whtG = baked ? 0.70f : 0.86f;
+    const float whtB = baked ? 0.74f : 0.90f;
+    // Outer (purple) colour
+    const float purR = baked ? 0.36f : 0.50f;
+    const float purG = baked ? 0.03f : 0.04f;
+    const float purB = baked ? 0.32f : 0.45f;
+
+    std::vector<float> rCh(n), gCh(n), bCh(n);
+
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const int i = y * width + x;
+            const float nu = static_cast<float>(x) / static_cast<float>(width);
+            const float nv = static_cast<float>(y) / static_cast<float>(height);
+
+            // Smooth gradient white (V=0) → purple (V=1)
+            const float t = nv * nv * (3.0f - 2.0f * nv);   // smoothstep
+
+            // Subtle fiber lines running along the arc (U axis)
+            const float fiber = 0.016f * std::sin(nu * 80.0f)
+                              + 0.009f * std::sin(nu * 155.0f + 1.2f);
+
+            rCh[i] = std::clamp(whtR + (purR - whtR) * t + fiber * (1.0f - t * 0.5f), 0.0f, 1.0f);
+            gCh[i] = std::clamp(whtG + (purG - whtG) * t + fiber * 0.7f,              0.0f, 1.0f);
+            bCh[i] = std::clamp(whtB + (purB - whtB) * t + fiber * 0.9f,              0.0f, 1.0f);
+        }
+    }
+
+    std::vector<unsigned char> textureData(static_cast<size_t>(width * height * 3));
+    for (int i = 0; i < n; ++i)
+    {
+        textureData[static_cast<size_t>(i * 3 + 0)] = static_cast<unsigned char>(rCh[i] * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 1)] = static_cast<unsigned char>(gCh[i] * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 2)] = static_cast<unsigned char>(bCh[i] * 255.0f + 0.5f);
+    }
+
+    uploadRgbTexture(g_redOnionTextureID, width, height, textureData.data());
+}
+
 void TextureManager::regenerateAllTextures()
 {
     generatePizzaTexture();
@@ -433,6 +488,7 @@ void TextureManager::regenerateAllTextures()
     generatePepperoniTexture();
     generateCheeseTexture();
     generatePineappleTexture();
+    generateRedOnionTexture();
 }
 
 void TextureManager::initPizzaTexture()
@@ -458,6 +514,11 @@ void TextureManager::initCheeseTexture()
 void TextureManager::initPineappleTexture()
 {
     generatePineappleTexture();
+}
+
+void TextureManager::initRedOnionTexture()
+{
+    generateRedOnionTexture();
 }
 
 void TextureManager::setBaked(bool baked)
@@ -505,6 +566,12 @@ void TextureManager::bindPineappleTexture()
     glBindTexture(GL_TEXTURE_2D, g_pineappleTextureID);
 }
 
+void TextureManager::bindRedOnionTexture()
+{
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g_redOnionTextureID);
+}
+
 void TextureManager::cleanupTextures()
 {
     if (g_pizzaTextureID != 0)
@@ -531,5 +598,10 @@ void TextureManager::cleanupTextures()
     {
         glDeleteTextures(1, &g_pineappleTextureID);
         g_pineappleTextureID = 0;
+    }
+    if (g_redOnionTextureID != 0)
+    {
+        glDeleteTextures(1, &g_redOnionTextureID);
+        g_redOnionTextureID = 0;
     }
 }
