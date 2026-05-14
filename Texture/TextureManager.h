@@ -6,10 +6,12 @@ public:
     static void initSauceTexture();
     static void initPepperoniTexture();
     static void initCheeseTexture();
+    static void initPineappleTexture();
     static void bindPizzaTexture();
     static void bindSauceTexture();
     static void bindPepperoniTexture();
     static void bindCheeseTexture();
+    static void bindPineappleTexture();
     static void cleanupTextures();
 
     static void setBaked(bool baked);
@@ -20,11 +22,13 @@ private:
     static unsigned int g_sauceTextureID;
     static unsigned int g_pepperoniTextureID;
     static unsigned int g_cheeseTextureID;
+    static unsigned int g_pineappleTextureID;
     static bool g_baked;
 
     static void generatePizzaTexture();
     static void generateSauceTexture();
     static void generatePepperoniTexture();
     static void generateCheeseTexture();
+    static void generatePineappleTexture();
     static void regenerateAllTextures();
 };

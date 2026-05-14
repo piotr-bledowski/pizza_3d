@@ -2,6 +2,7 @@
 #include "../Mesh/CheeseCuboid.h"
 #include "../Mesh/Pea.h"
 #include "../Mesh/Pepperoni.h"
+#include "../Mesh/PineappleRing.h"
 #include "../Mesh/Sauce.h"
 #include "../Texture/TextureManager.h"
 #include <algorithm>
@@ -16,6 +17,8 @@ constexpr float kPeaRadiusMax = 0.055f;
 constexpr int kPeaSphereSlices = 10;
 constexpr int kPeaSphereStacks = 10;
 constexpr int kPepperoniMaxAttempts = 80;
+constexpr int kPineappleMaxAttempts = 80;
+constexpr int kPineapplePerClick = 1;
 constexpr float kPepperoniRadiusMin = 0.09f;
 constexpr float kPepperoniRadiusMax = 0.14f;
 constexpr float kPepperoniHeightMin = 0.010f;
@@ -27,6 +30,11 @@ constexpr float kSauceLayerHeight = 0.012f;
 constexpr float kSauceRadiusMargin = 0.10f;
 constexpr float kToppingAboveSauce = 0.003f;
 constexpr float kToppingEdgeInset = 0.05f;
+// Fixed-size pineapple rings (all pieces identical).
+constexpr float kPineappleOuterRadius = 0.21f;
+constexpr float kPineappleInnerRadius = 0.078f;
+constexpr float kPineappleThickness = 0.0145f;
+constexpr int kPineappleRingSegs = 32;
 constexpr float PI = 3.14159265358979323846f;
 } // namespace
 
@@ -44,6 +52,9 @@ ToppingManager::~ToppingManager() {
         delete o.mesh;
     }
     for (auto& o : peas_) {
+        delete o.mesh;
+    }
+    for (auto& o : pineapple_) {
         delete o.mesh;
     }
     for (auto& o : sauce_) {
@@ -69,6 +80,16 @@ bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
             return true;
         }
     }
+    for (const auto& o : pineapple_) {
+        const float dx = x - o.position.x;
+        const float dz = z - o.position.z;
+        const float dist = std::sqrt(dx * dx + dz * dz);
+        const auto* ring = static_cast<const PineappleRing*>(o.mesh);
+        const float otherR = ring ? ring->outerRadius : kPineappleOuterRadius;
+        if (dist < r + otherR + kPlacementMargin) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -81,6 +102,23 @@ bool ToppingManager::tryPlacePepperoni(float& outX, float& outZ, float r) {
         const float x = rad * std::cos(t);
         const float z = rad * std::sin(t);
         if (!pepperoniOverlaps(x, z, r)) {
+            outX = x;
+            outZ = z;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ToppingManager::tryPlacePineapple(float& outX, float& outZ, float footprintR) {
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    const float maxR = std::max(0.05f, innerRadius_ - footprintR - kPlacementMargin - kToppingEdgeInset);
+    for (int attempt = 0; attempt < kPineappleMaxAttempts; ++attempt) {
+        const float t = u01(rng_) * 2.0f * PI;
+        const float rad = maxR * std::sqrt(u01(rng_));
+        const float x = rad * std::cos(t);
+        const float z = rad * std::sin(t);
+        if (!pepperoniOverlaps(x, z, footprintR)) {
             outX = x;
             outZ = z;
             return true;
@@ -212,6 +250,40 @@ void ToppingManager::removePeasBatch() {
     }
 }
 
+void ToppingManager::addPineappleBatch() {
+    const float outerR = kPineappleOuterRadius;
+    const float innerR = kPineappleInnerRadius;
+    const float thick = kPineappleThickness;
+
+    for (int i = 0; i < kPineapplePerClick; ++i) {
+        float px = 0.0f;
+        float pz = 0.0f;
+        if (!tryPlacePineapple(px, pz, outerR)) {
+            return;
+        }
+
+        SceneObject obj{};
+        obj.mesh = new PineappleRing(outerR, innerR, thick, kPineappleRingSegs);
+        const float lift = thick * 0.5f;
+        obj.position = {px, surfaceYForToppings() + lift, pz};
+        obj.rotation = {0.0f, 0.0f, 0.0f};
+        pineappleBaseX_.push_back(px);
+        pineappleBaseZ_.push_back(pz);
+        pineapple_.push_back(obj);
+    }
+}
+
+void ToppingManager::removePineappleBatch() {
+    for (int k = 0; k < kPineapplePerClick && !pineapple_.empty(); ++k) {
+        delete pineapple_.back().mesh;
+        pineapple_.pop_back();
+        if (!pineappleBaseX_.empty()) {
+            pineappleBaseX_.pop_back();
+            pineappleBaseZ_.pop_back();
+        }
+    }
+}
+
 void ToppingManager::addSauce() {
     if (!sauce_.empty()) {
         return;
@@ -224,6 +296,9 @@ void ToppingManager::addSauce() {
         o.position.y += delta;
     }
     for (auto& o : peas_) {
+        o.position.y += delta;
+    }
+    for (auto& o : pineapple_) {
         o.position.y += delta;
     }
 
@@ -247,6 +322,9 @@ void ToppingManager::removeSauce() {
         o.position.y -= delta;
     }
     for (auto& o : peas_) {
+        o.position.y -= delta;
+    }
+    for (auto& o : pineapple_) {
         o.position.y -= delta;
     }
 
@@ -296,6 +374,7 @@ void ToppingManager::syncSliceOffsets(const float offsets[16]) {
     applyOffsets(cheese_, cheeseBaseX_, cheeseBaseZ_);
     applyOffsets(pepperoni_, pepperoniBaseX_, pepperoniBaseZ_);
     applyOffsets(peas_, peasBaseX_, peasBaseZ_);
+    applyOffsets(pineapple_, pineappleBaseX_, pineappleBaseZ_);
 }
 
 void ToppingManager::setPizzaHeight(float pizzaHeight) {
@@ -317,6 +396,9 @@ void ToppingManager::setPizzaHeight(float pizzaHeight) {
         o.position.y += deltaY;
     }
     for (auto& o : peas_) {
+        o.position.y += deltaY;
+    }
+    for (auto& o : pineapple_) {
         o.position.y += deltaY;
     }
 }

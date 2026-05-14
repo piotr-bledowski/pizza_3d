@@ -9,6 +9,7 @@ unsigned int TextureManager::g_pizzaTextureID = 0;
 unsigned int TextureManager::g_sauceTextureID = 0;
 unsigned int TextureManager::g_pepperoniTextureID = 0;
 unsigned int TextureManager::g_cheeseTextureID = 0;
+unsigned int TextureManager::g_pineappleTextureID = 0;
 bool TextureManager::g_baked = false;
 
 namespace {
@@ -333,12 +334,105 @@ void TextureManager::generateCheeseTexture()
     uploadRgbTexture(g_cheeseTextureID, width, height, textureData.data());
 }
 
+void TextureManager::generatePineappleTexture()
+{
+    const bool baked = g_baked;
+    constexpr int width = 256;
+    constexpr int height = 256;
+    const int n = width * height;
+
+    const float baseR = baked ? 0.91f : 0.96f;
+    const float baseG = baked ? 0.84f : 0.88f;
+    const float baseB = baked ? 0.25f : 0.28f;
+
+    std::vector<float> rCh(n, baseR);
+    std::vector<float> gCh(n, baseG);
+    std::vector<float> bCh(n, baseB);
+
+    const float fiberScale = baked ? 0.96f : 1.0f;
+
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const int i = y * width + x;
+            const float nx = static_cast<float>(x) / static_cast<float>(width);
+            const float ny = static_cast<float>(y) / static_cast<float>(height);
+            const float cx = nx - 0.5f;
+            const float cy = ny - 0.5f;
+            const float dist = std::sqrt(cx * cx + cy * cy);
+            const float theta = (dist > 1e-5f) ? std::atan2(cy, cx) : 0.0f;
+            // Fibers run radially: vary with angle θ, strengthen toward outer radii (ring cross-section).
+            const float radialWeight = std::min(1.0f, dist * 2.35f);
+            const float t1 = fiberScale * 0.048f * radialWeight
+                * (std::sin(30.0f * theta) + 0.52f * std::sin(60.0f * theta + 0.41f)
+                    + 0.28f * std::sin(90.0f * theta - 0.25f));
+            // Slight twist along radius so lines are not perfectly straight spokes in UV space.
+            const float twist = 0.22f * std::sin(14.0f * dist * 6.28318530718f);
+            const float t2 = fiberScale * 0.022f * radialWeight * std::sin(44.0f * (theta + twist));
+
+            rCh[i] += t1 * 0.38f + t2 * 0.32f;
+            gCh[i] += t1 * 0.32f + t2 * 0.28f;
+            bCh[i] += t1 * 0.06f + t2 * 0.05f;
+        }
+    }
+
+    std::mt19937 rng(0x50494E41u);
+    std::uniform_real_distribution<float> u01(0.0f, 1.0f);
+    constexpr int kPores = 55;
+    for (int p = 0; p < kPores; ++p)
+    {
+        const float px = u01(rng) * static_cast<float>(width);
+        const float py = u01(rng) * static_cast<float>(height);
+        const float rad = 0.45f + u01(rng) * 1.35f;
+        const float radSq = rad * rad;
+        const int x0 = std::max(0, static_cast<int>(std::floor(px - rad - 1.0f)));
+        const int x1 = std::min(width - 1, static_cast<int>(std::ceil(px + rad + 1.0f)));
+        const int y0 = std::max(0, static_cast<int>(std::floor(py - rad - 1.0f)));
+        const int y1 = std::min(height - 1, static_cast<int>(std::ceil(py + rad + 1.0f)));
+        const float dk = baked ? 0.033f : 0.032f;
+        for (int yy = y0; yy <= y1; ++yy)
+        {
+            for (int xx = x0; xx <= x1; ++xx)
+            {
+                const float dx = static_cast<float>(xx) - px;
+                const float dy = static_cast<float>(yy) - py;
+                const float d2 = dx * dx + dy * dy;
+                if (d2 >= radSq)
+                {
+                    continue;
+                }
+                const float t = 1.0f - std::sqrt(d2) / rad;
+                const float w = t * t;
+                const int idx = yy * width + xx;
+                rCh[idx] -= dk * w;
+                gCh[idx] -= dk * 0.88f * w;
+                bCh[idx] -= dk * 0.35f * w;
+            }
+        }
+    }
+
+    std::vector<unsigned char> textureData(static_cast<size_t>(width * height * 3));
+    for (int i = 0; i < n; ++i)
+    {
+        const float rf = std::clamp(rCh[i], 0.0f, 1.0f);
+        const float gf = std::clamp(gCh[i], 0.0f, 1.0f);
+        const float bf = std::clamp(bCh[i], 0.0f, 1.0f);
+        textureData[static_cast<size_t>(i * 3 + 0)] = static_cast<unsigned char>(rf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 1)] = static_cast<unsigned char>(gf * 255.0f + 0.5f);
+        textureData[static_cast<size_t>(i * 3 + 2)] = static_cast<unsigned char>(bf * 255.0f + 0.5f);
+    }
+
+    uploadRgbTexture(g_pineappleTextureID, width, height, textureData.data());
+}
+
 void TextureManager::regenerateAllTextures()
 {
     generatePizzaTexture();
     generateSauceTexture();
     generatePepperoniTexture();
     generateCheeseTexture();
+    generatePineappleTexture();
 }
 
 void TextureManager::initPizzaTexture()
@@ -359,6 +453,11 @@ void TextureManager::initPepperoniTexture()
 void TextureManager::initCheeseTexture()
 {
     generateCheeseTexture();
+}
+
+void TextureManager::initPineappleTexture()
+{
+    generatePineappleTexture();
 }
 
 void TextureManager::setBaked(bool baked)
@@ -400,6 +499,12 @@ void TextureManager::bindCheeseTexture()
     glBindTexture(GL_TEXTURE_2D, g_cheeseTextureID);
 }
 
+void TextureManager::bindPineappleTexture()
+{
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g_pineappleTextureID);
+}
+
 void TextureManager::cleanupTextures()
 {
     if (g_pizzaTextureID != 0)
@@ -421,5 +526,10 @@ void TextureManager::cleanupTextures()
     {
         glDeleteTextures(1, &g_cheeseTextureID);
         g_cheeseTextureID = 0;
+    }
+    if (g_pineappleTextureID != 0)
+    {
+        glDeleteTextures(1, &g_pineappleTextureID);
+        g_pineappleTextureID = 0;
     }
 }
