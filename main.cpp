@@ -37,11 +37,13 @@ int g_sliceCount = g_defaultPizzaSliceCount;
 int g_cheeseClicks = 0;
 int g_pepperoniClicks = 0;
 int g_peasClicks = 0;
+int g_pineappleClicks = 0;
+int g_redOnionClicks = 0;
 
 // Slice pull-out state
 constexpr float kSlideDistance = 0.55f;
-constexpr float kSlideSpeed    = 0.14f;
-static bool  g_sliceSelected[16]     = {};
+constexpr float kSlideSpeed = 0.14f;
+static bool g_sliceSelected[16] = {};
 static float g_sliceCurrentOffset[16] = {};
 
 static void buildUI()
@@ -86,7 +88,8 @@ static void buildUI()
         if (drawButton(leftX + bw + buttonGap, sliceY, bw, bh, "Unslice", label, bg, bt, border))
         {
             g_isSliced = false;
-            for (int i = 0; i < 16; ++i) g_sliceSelected[i] = false;
+            for (int i = 0; i < 16; ++i)
+                g_sliceSelected[i] = false;
         }
         if (drawButton(leftX + bw + buttonGap + bw + buttonGap, sliceY, smallW, bh, "-", label, bg, bt, border))
         {
@@ -101,7 +104,8 @@ static void buildUI()
         drawText(leftX + bw + buttonGap + bw + buttonGap + smallW + smallGap + smallW + 0.01f, sliceY + 0.05f, sliceCountBuffer, text);
 
         const int effectiveSliceCount = g_isSliced ? g_sliceCount : 1;
-        if (g_pizzaBaseMesh) {
+        if (g_pizzaBaseMesh)
+        {
             g_pizzaBaseMesh->sliceCount = effectiveSliceCount;
         }
         g_toppings.setSliceCount(effectiveSliceCount);
@@ -110,7 +114,8 @@ static void buildUI()
         {
             TextureManager::setBaked(true);
             g_toppings.syncCheeseForBakeState(true);
-            if (g_pizzaBaseMesh) {
+            if (g_pizzaBaseMesh)
+            {
                 g_pizzaBaseMesh->height = g_bakedPizzaHeight;
                 g_pizzaBaseMesh->crustPuff = 1.0f;
             }
@@ -121,7 +126,8 @@ static void buildUI()
         {
             TextureManager::setBaked(false);
             g_toppings.syncCheeseForBakeState(false);
-            if (g_pizzaBaseMesh) {
+            if (g_pizzaBaseMesh)
+            {
                 g_pizzaBaseMesh->height = g_rawPizzaHeight;
                 g_pizzaBaseMesh->crustPuff = 0.0f;
             }
@@ -199,32 +205,68 @@ static void buildUI()
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_peasClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);
+
+        y -= rowStep;
+        drawLabelBox(rowX, y, nameW, rowH, "Pineapple", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
+        {
+            g_toppings.addPineappleBatch();
+            ++g_pineappleClicks;
+        }
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
+        {
+            g_toppings.removePineappleBatch();
+            --g_pineappleClicks;
+        }
+        snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_pineappleClicks);
+        drawText(counterX, y + counterYOffset, counterBuffer, text);
+
+        y -= rowStep;
+        drawLabelBox(rowX, y, nameW, rowH, "Red onion", label, darkLabelBg, bt, border);
+        if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
+        {
+            g_toppings.addRedOnionBatch();
+            ++g_redOnionClicks;
+        }
+        if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
+        {
+            g_toppings.removeRedOnionBatch();
+            --g_redOnionClicks;
+        }
+        snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_redOnionClicks);
+        drawText(counterX, y + counterYOffset, counterBuffer, text);
     }
 }
 
 static void tickSliceAnimation()
 {
     // Toggle selection on click if hovered over a slice.
-    if (consumePizzaClick()) {
+    if (consumePizzaClick())
+    {
         const int hs = getHoveredSlice();
-        if (hs >= 0 && hs < 16 && g_isSliced) {
+        if (hs >= 0 && hs < 16 && g_isSliced)
+        {
             g_sliceSelected[hs] = !g_sliceSelected[hs];
         }
     }
 
     // Smoothly animate each slice offset toward its target.
-    for (int i = 0; i < 16; ++i) {
+    for (int i = 0; i < 16; ++i)
+    {
         const bool sel = g_isSliced && (i < g_sliceCount) && g_sliceSelected[i];
         const float target = sel ? kSlideDistance : 0.0f;
         g_sliceCurrentOffset[i] += (target - g_sliceCurrentOffset[i]) * kSlideSpeed;
-        if (std::abs(g_sliceCurrentOffset[i]) < 0.001f && target == 0.0f) {
+        if (std::abs(g_sliceCurrentOffset[i]) < 0.001f && target == 0.0f)
+        {
             g_sliceCurrentOffset[i] = 0.0f;
         }
     }
 
     // Push offsets into the pizza base mesh.
-    if (g_pizzaBaseMesh) {
-        for (int i = 0; i < 16; ++i) {
+    if (g_pizzaBaseMesh)
+    {
+        for (int i = 0; i < 16; ++i)
+        {
             g_pizzaBaseMesh->sliceOffsets[i] = g_sliceCurrentOffset[i];
         }
     }
@@ -240,14 +282,18 @@ static void updateScene()
     const std::vector<SceneObject> &cheese = g_toppings.getCheese();
     const std::vector<SceneObject> &pep = g_toppings.getPepperoni();
     const std::vector<SceneObject> &peas = g_toppings.getPeas();
+    const std::vector<SceneObject> &pineapple = g_toppings.getPineapple();
+    const std::vector<SceneObject> &redOnion = g_toppings.getRedOnion();
 
     std::vector<SceneObject> all;
-    all.reserve(base.size() + sauce.size() + cheese.size() + pep.size() + peas.size());
+    all.reserve(base.size() + sauce.size() + cheese.size() + pep.size() + peas.size() + pineapple.size() + redOnion.size());
     all.insert(all.end(), base.begin(), base.end());
     all.insert(all.end(), sauce.begin(), sauce.end());
     all.insert(all.end(), cheese.begin(), cheese.end());
     all.insert(all.end(), pep.begin(), pep.end());
     all.insert(all.end(), peas.begin(), peas.end());
+    all.insert(all.end(), pineapple.begin(), pineapple.end());
+    all.insert(all.end(), redOnion.begin(), redOnion.end());
     setScene(all);
 }
 

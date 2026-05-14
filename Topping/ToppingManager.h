@@ -14,6 +14,10 @@ public:
     void removePepperoni();
     void addPeasBatch();
     void removePeasBatch();
+    void addPineappleBatch();
+    void removePineappleBatch();
+    void addRedOnionBatch();
+    void removeRedOnionBatch();
     void addSauce();
     void removeSauce();
     void setSliceCount(int sliceCount);
@@ -27,6 +31,8 @@ public:
     const std::vector<SceneObject>& getCheese() const { return cheese_; }
     const std::vector<SceneObject>& getPepperoni() const { return pepperoni_; }
     const std::vector<SceneObject>& getPeas() const { return peas_; }
+    const std::vector<SceneObject>& getPineapple() const { return pineapple_; }
+    const std::vector<SceneObject>& getRedOnion() const { return redOnion_; }
     const std::vector<SceneObject>& getSauce() const { return sauce_; }
 
     ~ToppingManager();
@@ -46,10 +52,18 @@ private:
     std::vector<float> pepperoniBaseX_, pepperoniBaseZ_;
     std::vector<SceneObject> peas_;
     std::vector<float> peasBaseX_, peasBaseZ_;
+    std::vector<SceneObject> pineapple_;
+    std::vector<float> pineappleBaseX_, pineappleBaseZ_;
+    std::vector<SceneObject> redOnion_;
+    std::vector<float> redOnionBaseX_, redOnionBaseZ_;
     std::vector<SceneObject> sauce_;
 
     float surfaceYForToppings() const;
 
     bool pepperoniOverlaps(float x, float z, float r) const;
+    bool pineappleOnlyOverlaps(float x, float z, float r) const;
+    bool redOnionOnlyOverlaps(float x, float z, float r) const;
     bool tryPlacePepperoni(float& outX, float& outZ, float r);
+    bool tryPlacePineapple(float& outX, float& outZ, float footprintR);
+    bool tryPlaceRedOnion(float& outX, float& outZ, float footprintR);
 };
