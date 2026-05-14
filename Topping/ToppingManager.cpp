@@ -10,19 +10,20 @@
 #include <random>
 
 namespace {
-constexpr int kCheesePerClick = 10;
+constexpr int kCheesePerClick = 50;
 constexpr int kPeasPerClick = 10;
 constexpr float kPeaRadiusMin = 0.028f;
 constexpr float kPeaRadiusMax = 0.055f;
 constexpr int kPeaSphereSlices = 10;
 constexpr int kPeaSphereStacks = 10;
 constexpr int kPepperoniMaxAttempts = 80;
+constexpr int kPepperoniPerClick = 10;
 constexpr int kPineappleMaxAttempts = 80;
-constexpr int kPineapplePerClick = 1;
-constexpr float kPepperoniRadiusMin = 0.09f;
-constexpr float kPepperoniRadiusMax = 0.14f;
-constexpr float kPepperoniHeightMin = 0.010f;
-constexpr float kPepperoniHeightMax = 0.020f;
+constexpr int kPineapplePerClick = 10;
+constexpr float kPepperoniRadiusMin = 0.135f;
+constexpr float kPepperoniRadiusMax = 0.21f;
+constexpr float kPepperoniHeightMin = 0.015f;
+constexpr float kPepperoniHeightMax = 0.030f;
 constexpr float kCheeseDimMin = 0.035f;
 constexpr float kCheeseDimMax = 0.095f;
 constexpr float kPlacementMargin = 0.04f;
@@ -30,10 +31,10 @@ constexpr float kSauceLayerHeight = 0.012f;
 constexpr float kSauceRadiusMargin = 0.10f;
 constexpr float kToppingAboveSauce = 0.003f;
 constexpr float kToppingEdgeInset = 0.05f;
-// Fixed-size pineapple rings (all pieces identical).
-constexpr float kPineappleOuterRadius = 0.21f;
-constexpr float kPineappleInnerRadius = 0.078f;
-constexpr float kPineappleThickness = 0.0145f;
+// Fixed-size pineapple rings (all pieces identical). ~1.5× prior footprint.
+constexpr float kPineappleOuterRadius = 0.315f;
+constexpr float kPineappleInnerRadius = 0.117f;
+constexpr float kPineappleThickness = 0.02175f;
 constexpr int kPineappleRingSegs = 32;
 constexpr float PI = 3.14159265358979323846f;
 } // namespace
@@ -190,33 +191,37 @@ void ToppingManager::addPepperoni() {
     std::uniform_real_distribution<float> hDist(kPepperoniHeightMin, kPepperoniHeightMax);
     std::uniform_real_distribution<float> rotY(-180.0f, 180.0f);
 
-    const float pr = radDist(rng_);
-    float px = 0.0f;
-    float pz = 0.0f;
-    if (!tryPlacePepperoni(px, pz, pr)) {
-        return;
+    for (int n = 0; n < kPepperoniPerClick; ++n) {
+        const float pr = radDist(rng_);
+        float px = 0.0f;
+        float pz = 0.0f;
+        if (!tryPlacePepperoni(px, pz, pr)) {
+            return;
+        }
+
+        const float ph = hDist(rng_);
+        const int segs = 20;
+
+        SceneObject obj{};
+        obj.mesh = new Pepperoni(pr, ph, segs);
+        const float lift = ph * 0.5f;
+        obj.position = {px, surfaceYForToppings() + lift, pz};
+        obj.rotation = {0.0f, rotY(rng_), 0.0f};
+        pepperoniBaseX_.push_back(px);
+        pepperoniBaseZ_.push_back(pz);
+        pepperoni_.push_back(obj);
     }
-
-    const float ph = hDist(rng_);
-    const int segs = 20;
-
-    SceneObject obj{};
-    obj.mesh = new Pepperoni(pr, ph, segs);
-    const float lift = ph * 0.5f;
-    obj.position = {px, surfaceYForToppings() + lift, pz};
-    obj.rotation = {0.0f, rotY(rng_), 0.0f};
-    pepperoniBaseX_.push_back(px);
-    pepperoniBaseZ_.push_back(pz);
-    pepperoni_.push_back(obj);
 }
 
 void ToppingManager::removePepperoni() {
-    if (pepperoni_.empty()) {
-        return;
+    for (int k = 0; k < kPepperoniPerClick && !pepperoni_.empty(); ++k) {
+        delete pepperoni_.back().mesh;
+        pepperoni_.pop_back();
+        if (!pepperoniBaseX_.empty()) {
+            pepperoniBaseX_.pop_back();
+            pepperoniBaseZ_.pop_back();
+        }
     }
-    delete pepperoni_.back().mesh;
-    pepperoni_.pop_back();
-    if (!pepperoniBaseX_.empty()) { pepperoniBaseX_.pop_back(); pepperoniBaseZ_.pop_back(); }
 }
 
 void ToppingManager::addPeasBatch() {
