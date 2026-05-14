@@ -88,6 +88,10 @@ bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
             return true;
         }
     }
+    return false;
+}
+
+bool ToppingManager::pineappleOnlyOverlaps(float x, float z, float r) const {
     for (const auto& o : pineapple_) {
         const float dx = x - o.position.x;
         const float dz = z - o.position.z;
@@ -98,6 +102,10 @@ bool ToppingManager::pepperoniOverlaps(float x, float z, float r) const {
             return true;
         }
     }
+    return false;
+}
+
+bool ToppingManager::redOnionOnlyOverlaps(float x, float z, float r) const {
     for (const auto& o : redOnion_) {
         const float dx = x - o.position.x;
         const float dz = z - o.position.z;
@@ -136,7 +144,7 @@ bool ToppingManager::tryPlacePineapple(float& outX, float& outZ, float footprint
         const float rad = maxR * std::sqrt(u01(rng_));
         const float x = rad * std::cos(t);
         const float z = rad * std::sin(t);
-        if (!pepperoniOverlaps(x, z, footprintR)) {
+        if (!pineappleOnlyOverlaps(x, z, footprintR)) {
             outX = x;
             outZ = z;
             return true;
@@ -153,7 +161,7 @@ bool ToppingManager::tryPlaceRedOnion(float& outX, float& outZ, float footprintR
         const float rad = maxR * std::sqrt(u01(rng_));
         const float x = rad * std::cos(t);
         const float z = rad * std::sin(t);
-        if (!pepperoniOverlaps(x, z, footprintR)) {
+        if (!redOnionOnlyOverlaps(x, z, footprintR)) {
             outX = x;
             outZ = z;
             return true;

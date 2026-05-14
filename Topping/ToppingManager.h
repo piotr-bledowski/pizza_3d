@@ -61,6 +61,8 @@ private:
     float surfaceYForToppings() const;
 
     bool pepperoniOverlaps(float x, float z, float r) const;
+    bool pineappleOnlyOverlaps(float x, float z, float r) const;
+    bool redOnionOnlyOverlaps(float x, float z, float r) const;
     bool tryPlacePepperoni(float& outX, float& outZ, float r);
     bool tryPlacePineapple(float& outX, float& outZ, float footprintR);
     bool tryPlaceRedOnion(float& outX, float& outZ, float footprintR);
