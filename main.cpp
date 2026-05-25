@@ -14,6 +14,7 @@
 #include "Topping/ToppingManager.h"
 #include "Texture/TextureManager.h"
 #include "UI/UI.h"
+#include "UI/Localization.h"
 
 float g_radius = 2.5f;
 float g_height = 0.15f;
@@ -58,12 +59,24 @@ static void buildUI()
     const float bw = 0.2f;
     const float bh = 0.08f;
 
-    drawText(0.02f, 0.02f, "Tab: switch camera / UI", text);
-    drawText(0.02f, 0.055f, "Camera: WASD move, QE up/down, mouse look (cursor kept in window)", text);
+    drawText(0.02f, 0.02f, uiStr(UiString::HintTab), text);
+    drawText(0.02f, 0.055f, uiStr(UiString::HintCamera), text);
+
+    const float langBtnW = 0.12f;
+    const float langBtnH = 0.055f;
+    const float langBtnX = 1.0f - langBtnW - 0.02f;
+    const float langBtnY = 0.02f;
+    const UiString langLabel = (getUiLanguage() == UiLanguage::English)
+        ? UiString::LangSwitchToPolish
+        : UiString::LangSwitchToEnglish;
+    if (drawButton(langBtnX, langBtnY, langBtnW, langBtnH, uiStr(langLabel), label, bg, bt, border))
+    {
+        toggleUiLanguage();
+    }
 
     if (getControlMode() == ControlMode::UI)
     {
-        drawText(0.02f, 0.09f, "UI: toppings, sauce, Bake / Unbake pizza", text);
+        drawText(0.02f, 0.09f, uiStr(UiString::HintUiMode), text);
 
         const float leftX = 0.02f;
         const float buttonGap = 0.02f;
@@ -72,36 +85,41 @@ static void buildUI()
         const float manageY = sliceY - bh - 0.02f;
         const float manageX = leftX;
         const float manageW = 0.42f;
+        const float sliceBtnW = bw;
         const float smallW = 0.055f;
         const float smallGap = 0.01f;
 
-        const char *manageLabel = g_showToppingControls ? "Hide topping management" : "Show topping management";
+        const char *manageLabel = g_showToppingControls
+            ? uiStr(UiString::ToppingManageHide)
+            : uiStr(UiString::ToppingManageShow);
         if (drawButton(manageX, manageY, manageW, bh, manageLabel, label, bg, bt, border))
         {
             g_showToppingControls = !g_showToppingControls;
         }
 
-        if (drawButton(leftX, sliceY, bw, bh, "Slice", label, bg, bt, border))
+        if (drawButton(leftX, sliceY, sliceBtnW, bh, uiStr(UiString::Slice), label, bg, bt, border))
         {
             g_isSliced = true;
         }
-        if (drawButton(leftX + bw + buttonGap, sliceY, bw, bh, "Unslice", label, bg, bt, border))
+        const float unsliceX = leftX + sliceBtnW + buttonGap;
+        if (drawButton(unsliceX, sliceY, sliceBtnW, bh, uiStr(UiString::Unslice), label, bg, bt, border))
         {
             g_isSliced = false;
             for (int i = 0; i < 16; ++i)
                 g_sliceSelected[i] = false;
         }
-        if (drawButton(leftX + bw + buttonGap + bw + buttonGap, sliceY, smallW, bh, "-", label, bg, bt, border))
+        const float sliceCountX = unsliceX + sliceBtnW + buttonGap;
+        if (drawButton(sliceCountX, sliceY, smallW, bh, "-", label, bg, bt, border))
         {
             g_sliceCount = std::max(2, g_sliceCount - 1);
         }
-        if (drawButton(leftX + bw + buttonGap + bw + buttonGap + smallW + smallGap, sliceY, smallW, bh, "+", label, bg, bt, border))
+        if (drawButton(sliceCountX + smallW + smallGap, sliceY, smallW, bh, "+", label, bg, bt, border))
         {
             g_sliceCount = std::min(16, g_sliceCount + 1);
         }
         char sliceCountBuffer[32];
-        snprintf(sliceCountBuffer, sizeof(sliceCountBuffer), "Slices: %d", g_sliceCount);
-        drawText(leftX + bw + buttonGap + bw + buttonGap + smallW + smallGap + smallW + 0.01f, sliceY + 0.05f, sliceCountBuffer, text);
+        snprintf(sliceCountBuffer, sizeof(sliceCountBuffer), uiStr(UiString::SlicesCountFmt), g_sliceCount);
+        drawText(sliceCountX + smallW + smallGap + smallW + 0.01f, sliceY + 0.05f, sliceCountBuffer, text);
 
         const int effectiveSliceCount = g_isSliced ? g_sliceCount : 1;
         if (g_pizzaBaseMesh)
@@ -110,7 +128,7 @@ static void buildUI()
         }
         g_toppings.setSliceCount(effectiveSliceCount);
 
-        if (drawButton(leftX, bakeY, bw, bh, "Bake", label, bg, bt, border))
+        if (drawButton(leftX, bakeY, bw, bh, uiStr(UiString::Bake), label, bg, bt, border))
         {
             TextureManager::setBaked(true);
             g_toppings.syncCheeseForBakeState(true);
@@ -122,7 +140,7 @@ static void buildUI()
             g_toppings.setPizzaHeight(g_bakedPizzaHeight);
         }
 
-        if (drawButton(leftX + bw + buttonGap, bakeY, bw, bh, "Unbake", label, bg, bt, border))
+        if (drawButton(leftX + bw + buttonGap, bakeY, bw, bh, uiStr(UiString::Unbake), label, bg, bt, border))
         {
             TextureManager::setBaked(false);
             g_toppings.syncCheeseForBakeState(false);
@@ -151,7 +169,7 @@ static void buildUI()
 
         float y = rowStartY;
 
-        drawLabelBox(rowX, y, nameW, rowH, "Sauce", label, darkLabelBg, bt, border);
+        drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Sauce), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addSauce();
@@ -162,7 +180,7 @@ static void buildUI()
         }
 
         y -= rowStep;
-        drawLabelBox(rowX, y, nameW, rowH, "Cheese", label, darkLabelBg, bt, border);
+        drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Cheese), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addCheeseBatch();
@@ -177,7 +195,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
-        drawLabelBox(rowX, y, nameW, rowH, "Pepperoni", label, darkLabelBg, bt, border);
+        drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Pepperoni), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPepperoni();
@@ -192,7 +210,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
-        drawLabelBox(rowX, y, nameW, rowH, "Peas", label, darkLabelBg, bt, border);
+        drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Peas), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPeasBatch();
@@ -207,7 +225,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
-        drawLabelBox(rowX, y, nameW, rowH, "Pineapple", label, darkLabelBg, bt, border);
+        drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Pineapple), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addPineappleBatch();
@@ -222,7 +240,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
-        drawLabelBox(rowX, y, nameW, rowH, "Red onion", label, darkLabelBg, bt, border);
+        drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::RedOnion), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
             g_toppings.addRedOnionBatch();
