@@ -14,8 +14,8 @@ public:
     void removePepperoni();
     void addPeasBatch();
     void removePeasBatch();
-    void addPineappleBatch();
-    void removePineappleBatch();
+    bool addPineappleBatch();
+    bool removePineappleBatch();
     void addRedOnionBatch();
     void removeRedOnionBatch();
     void addSauce();

@@ -188,8 +188,11 @@ static void buildUI()
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
-            g_toppings.removeCheeseBatch();
-            --g_cheeseClicks;
+            if (g_cheeseClicks > 0)
+            {
+                g_toppings.removeCheeseBatch();
+                --g_cheeseClicks;
+            }
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_cheeseClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);
@@ -203,8 +206,11 @@ static void buildUI()
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
-            g_toppings.removePepperoni();
-            --g_pepperoniClicks;
+            if (g_pepperoniClicks > 0)
+            {
+                g_toppings.removePepperoni();
+                --g_pepperoniClicks;
+            }
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_pepperoniClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);
@@ -218,8 +224,11 @@ static void buildUI()
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
-            g_toppings.removePeasBatch();
-            --g_peasClicks;
+            if (g_peasClicks > 0)
+            {
+                g_toppings.removePeasBatch();
+                --g_peasClicks;
+            }
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_peasClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);
@@ -228,13 +237,17 @@ static void buildUI()
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Pineapple), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
-            g_toppings.addPineappleBatch();
-            ++g_pineappleClicks;
+            if (g_toppings.addPineappleBatch())
+            {
+                ++g_pineappleClicks;
+            }
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
-            g_toppings.removePineappleBatch();
-            --g_pineappleClicks;
+            if (g_pineappleClicks > 0 && g_toppings.removePineappleBatch())
+            {
+                --g_pineappleClicks;
+            }
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_pineappleClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);
@@ -248,8 +261,11 @@ static void buildUI()
         }
         if (drawButton(rowX + nameW + smallGap + smallW + smallGap, y, smallW, rowH, "-", label, bg, bt, border))
         {
-            g_toppings.removeRedOnionBatch();
-            --g_redOnionClicks;
+            if (g_redOnionClicks > 0)
+            {
+                g_toppings.removeRedOnionBatch();
+                --g_redOnionClicks;
+            }
         }
         snprintf(counterBuffer, sizeof(counterBuffer), "%d", g_redOnionClicks);
         drawText(counterX, y + counterYOffset, counterBuffer, text);

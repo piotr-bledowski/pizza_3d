@@ -20,7 +20,7 @@ constexpr int kPeaSphereStacks = 10;
 constexpr int kPepperoniMaxAttempts = 80;
 constexpr int kPepperoniPerClick = 10;
 constexpr int kPineappleMaxAttempts = 80;
-constexpr int kPineapplePerClick = 10;
+constexpr int kPineapplePerClick = 1;
 constexpr float kPepperoniRadiusMin = 0.135f;
 constexpr float kPepperoniRadiusMax = 0.21f;
 constexpr float kPepperoniHeightMin = 0.015f;
@@ -297,7 +297,7 @@ void ToppingManager::removePeasBatch() {
     }
 }
 
-void ToppingManager::addPineappleBatch() {
+bool ToppingManager::addPineappleBatch() {
     const float outerR = kPineappleOuterRadius;
     const float innerR = kPineappleInnerRadius;
     const float thick = kPineappleThickness;
@@ -306,7 +306,7 @@ void ToppingManager::addPineappleBatch() {
         float px = 0.0f;
         float pz = 0.0f;
         if (!tryPlacePineapple(px, pz, outerR)) {
-            return;
+            return false;
         }
 
         SceneObject obj{};
@@ -318,9 +318,13 @@ void ToppingManager::addPineappleBatch() {
         pineappleBaseZ_.push_back(pz);
         pineapple_.push_back(obj);
     }
+    return true;
 }
 
-void ToppingManager::removePineappleBatch() {
+bool ToppingManager::removePineappleBatch() {
+    if (pineapple_.empty()) {
+        return false;
+    }
     for (int k = 0; k < kPineapplePerClick && !pineapple_.empty(); ++k) {
         delete pineapple_.back().mesh;
         pineapple_.pop_back();
@@ -329,6 +333,7 @@ void ToppingManager::removePineappleBatch() {
             pineappleBaseZ_.pop_back();
         }
     }
+    return true;
 }
 
 void ToppingManager::addRedOnionBatch() {
