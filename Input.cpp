@@ -14,6 +14,7 @@ float mouseSensitivity = 0.2f;
 extern float yaw;
 extern float pitch;
 
+// Camera mode = FPS-style look/move, UI mode = cursor-based button interaction.
 static ControlMode g_controlMode = ControlMode::Camera;
 
 ControlMode getControlMode()
@@ -53,12 +54,14 @@ void keyUp(unsigned char key, int, int)
 
 void mouseMotion(int x, int y)
 {
+    // In UI mode, keep raw cursor position for button hit testing / pizza hover.
     if (g_controlMode == ControlMode::UI) {
         lastMouseX = x;
         lastMouseY = y;
         return;
     }
 
+    // Ignore first delta after mode switch to avoid abrupt camera jump.
     if (firstMouse) {
         lastMouseX = x;
         lastMouseY = y;
@@ -79,6 +82,7 @@ void mouseMotion(int x, int y)
         pitch = -89.0f;
     }
 
+    // Clamp + warp near edges so camera look remains continuous.
     int w = glutGet(GLUT_WINDOW_WIDTH);
     int h = glutGet(GLUT_WINDOW_HEIGHT);
     const int margin = 2;
@@ -100,6 +104,7 @@ static bool g_pizzaClickPending = false;
 
 bool consumePizzaClick()
 {
+    // One-shot event consumed by slice animation logic in main loop.
     if (g_pizzaClickPending) {
         g_pizzaClickPending = false;
         return true;
@@ -109,6 +114,7 @@ bool consumePizzaClick()
 
 void mouseButton(int button, int state, int x, int y)
 {
+    // First route click to UI controls, then optionally flag pizza click.
     uiOnMouseClick(x, y, button, state);
     if (g_controlMode == ControlMode::UI && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         g_pizzaClickPending = true;

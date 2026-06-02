@@ -50,6 +50,7 @@ ToppingManager::ToppingManager(float pizzaRadius, float pizzaHeight, float crust
     , rng_(std::random_device{}()) {}
 
 ToppingManager::~ToppingManager() {
+    // Manager owns topping meshes and releases them on shutdown.
     for (auto& o : cheese_) {
         delete o.mesh;
     }
@@ -71,6 +72,7 @@ ToppingManager::~ToppingManager() {
 }
 
 float ToppingManager::surfaceYForToppings() const {
+    // Toppings sit on sauce when present, otherwise on pizza surface.
     if (!sauce_.empty()) {
         return pizzaHalfH_ + kSauceLayerHeight + kToppingAboveSauce;
     }
@@ -120,6 +122,7 @@ bool ToppingManager::redOnionOnlyOverlaps(float x, float z, float r) const {
 }
 
 bool ToppingManager::tryPlacePepperoni(float& outX, float& outZ, float r) {
+    // Random radial placement with overlap rejection.
     std::uniform_real_distribution<float> u01(0.0f, 1.0f);
     const float maxR = std::max(0.05f, innerRadius_ - r - kPlacementMargin - kToppingEdgeInset);
     for (int attempt = 0; attempt < kPepperoniMaxAttempts; ++attempt) {
@@ -171,6 +174,7 @@ bool ToppingManager::tryPlaceRedOnion(float& outX, float& outZ, float footprintR
 }
 
 void ToppingManager::addCheeseBatch() {
+    // Adds many small cubes per click to create a "sprinkled" cheese effect.
     std::uniform_real_distribution<float> u01(0.0f, 1.0f);
     std::uniform_real_distribution<float> dimDist(kCheeseDimMin, kCheeseDimMax);
     std::uniform_real_distribution<float> rotDist(-180.0f, 180.0f);
@@ -379,6 +383,7 @@ void ToppingManager::removeRedOnionBatch() {
 }
 
 void ToppingManager::addSauce() {
+    // Lifts existing toppings so sauce is visually inserted as a new layer.
     if (!sauce_.empty()) {
         return;
     }
@@ -408,6 +413,7 @@ void ToppingManager::addSauce() {
 }
 
 void ToppingManager::removeSauce() {
+    // Reverts the lift that was applied when sauce was added.
     if (sauce_.empty()) {
         return;
     }
@@ -457,6 +463,7 @@ void ToppingManager::syncSliceOffsets(const float offsets[16]) {
 
     const float sliceAngle = 2.0f * PI / static_cast<float>(sliceCount_);
 
+    // Repositions toppings using cached base coordinates + slice radial offset.
     auto applyOffsets = [&](std::vector<SceneObject>& objs,
                             const std::vector<float>& bx,
                             const std::vector<float>& bz) {

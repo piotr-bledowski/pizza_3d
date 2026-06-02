@@ -29,6 +29,7 @@ constexpr int g_defaultPizzaSliceCount = 6;
 const float g_bakedPizzaHeight = g_height;
 const float g_rawPizzaHeight = g_height * 0.5f;
 
+// Core runtime state shared by callbacks.
 SceneManager g_scene;
 ToppingManager g_toppings(g_radius, g_rawPizzaHeight, g_pizzaCrustEdgeRadius, 1);
 Cylinder *g_pizzaBaseMesh = nullptr;
@@ -47,6 +48,7 @@ constexpr float kSlideSpeed = 0.14f;
 static bool g_sliceSelected[16] = {};
 static float g_sliceCurrentOffset[16] = {};
 
+// Builds one UI frame and applies UI-triggered state changes.
 static void buildUI()
 {
     Color4 text{1.0f, 1.0f, 1.0f, 1.0f};
@@ -59,6 +61,9 @@ static void buildUI()
     const float bw = 0.2f;
     const float bh = 0.08f;
 
+    // ---------------------------------------------------------------------
+    // Global hints + language toggle (always visible).
+    // ---------------------------------------------------------------------
     drawText(0.02f, 0.02f, uiStr(UiString::HintTab), text);
     drawText(0.02f, 0.055f, uiStr(UiString::HintCamera), text);
 
@@ -74,6 +79,9 @@ static void buildUI()
         toggleUiLanguage();
     }
 
+    // ---------------------------------------------------------------------
+    // Main pizza UI (only in UI mode): slicing, bake/unbake, topping controls.
+    // ---------------------------------------------------------------------
     if (getControlMode() == ControlMode::UI)
     {
         drawText(0.02f, 0.09f, uiStr(UiString::HintUiMode), text);
@@ -92,11 +100,14 @@ static void buildUI()
         const char *manageLabel = g_showToppingControls
             ? uiStr(UiString::ToppingManageHide)
             : uiStr(UiString::ToppingManageShow);
+
+        // Toggle showing/hiding the whole topping panel.
         if (drawButton(manageX, manageY, manageW, bh, manageLabel, label, bg, bt, border))
         {
             g_showToppingControls = !g_showToppingControls;
         }
 
+        // Slice pull-out enable/disable.
         if (drawButton(leftX, sliceY, sliceBtnW, bh, uiStr(UiString::Slice), label, bg, bt, border))
         {
             g_isSliced = true;
@@ -108,6 +119,8 @@ static void buildUI()
             for (int i = 0; i < 16; ++i)
                 g_sliceSelected[i] = false;
         }
+
+        // Choose number of pizza slices (only applied when slicing is enabled).
         const float sliceCountX = unsliceX + sliceBtnW + buttonGap;
         if (drawButton(sliceCountX, sliceY, smallW, bh, "-", label, bg, bt, border))
         {
@@ -124,10 +137,13 @@ static void buildUI()
         const int effectiveSliceCount = g_isSliced ? g_sliceCount : 1;
         if (g_pizzaBaseMesh)
         {
+            // Base pizza mesh uses this count to generate slice geometry.
             g_pizzaBaseMesh->sliceCount = effectiveSliceCount;
         }
+        // Toppings/sauce use the slice count to position themselves for slicing.
         g_toppings.setSliceCount(effectiveSliceCount);
 
+        // Bake/unbake toggles textures and also changes the pizza geometry height.
         if (drawButton(leftX, bakeY, bw, bh, uiStr(UiString::Bake), label, bg, bt, border))
         {
             TextureManager::setBaked(true);
@@ -152,11 +168,13 @@ static void buildUI()
             g_toppings.setPizzaHeight(g_rawPizzaHeight);
         }
 
+        // If the topping panel is collapsed, skip rendering the per-topping controls.
         if (!g_showToppingControls)
         {
             return;
         }
 
+        // Layout constants for the topping rows.
         const float rowX = leftX;
         const float rowStartY = manageY - 0.08f;
         const float rowStep = 0.08f;
@@ -169,6 +187,8 @@ static void buildUI()
 
         float y = rowStartY;
 
+        // --- Sauce row -----------------------------------------------------
+        // Adds/removes the sauce layer (and offsets existing toppings).
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Sauce), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -180,6 +200,8 @@ static void buildUI()
         }
 
         y -= rowStep;
+        // --- Cheese row ----------------------------------------------------
+        // Sprinkles cheese cubes; bake/unbake controls how cheese rotates.
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Cheese), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -198,6 +220,8 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
+        // --- Pepperoni row ------------------------------------------------
+        // Places pepperoni discs with random positions (overlap-checked).
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Pepperoni), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -216,6 +240,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
+        // --- Peas row -------------------------------------------------------
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Peas), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -234,6 +259,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
+        // --- Pineapple row ------------------------------------------------
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::Pineapple), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -253,6 +279,7 @@ static void buildUI()
         drawText(counterX, y + counterYOffset, counterBuffer, text);
 
         y -= rowStep;
+        // --- Red onion row -------------------------------------------------
         drawLabelBox(rowX, y, nameW, rowH, uiStr(UiString::RedOnion), label, darkLabelBg, bt, border);
         if (drawButton(rowX + nameW + smallGap, y, smallW, rowH, "+", label, bg, bt, border))
         {
@@ -272,6 +299,7 @@ static void buildUI()
     }
 }
 
+// Updates "pulled out slice" animation and pushes offsets to meshes/toppings.
 static void tickSliceAnimation()
 {
     // Toggle selection on click if hovered over a slice.
@@ -309,6 +337,7 @@ static void tickSliceAnimation()
     g_toppings.syncSliceOffsets(g_sliceCurrentOffset);
 }
 
+// Composes the final scene list consumed by the renderer each frame.
 static void updateScene()
 {
     const std::vector<SceneObject> &base = g_scene.getObjects();
@@ -333,6 +362,7 @@ static void updateScene()
 
 void displayWrapper()
 {
+    // Per-frame pipeline: gather UI intents, update simulation, then draw.
     uiBeginFrame();
     buildUI();
     uiEndFrameClicks();
@@ -343,16 +373,19 @@ void displayWrapper()
 
 int main(int argc, char **argv)
 {
+    // GLUT + OpenGL initialization.
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(800, 600);
     glutCreateWindow("OpenGL Scene");
 
+    // Base pizza mesh is owned by SceneManager cleanup path.
     g_pizzaBaseMesh = new Cylinder(g_radius, g_rawPizzaHeight, g_segments, 1);
     g_scene.addObject({g_pizzaBaseMesh, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}});
 
     initGL();
 
+    // Register input/render callbacks.
     glutDisplayFunc(displayWrapper);
     glutKeyboardFunc(keyDown);
     glutKeyboardUpFunc(keyUp);

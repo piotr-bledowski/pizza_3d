@@ -31,6 +31,7 @@ namespace
         float borderThickness;
     };
 
+    // Per-frame immediate-mode buffers, rebuilt every render tick.
     std::vector<UIText> g_frameTexts;
     std::vector<UIButton> g_frameButtons;
     std::vector<UILabelBox> g_frameLabels;
@@ -65,6 +66,7 @@ namespace
 
 void uiBeginFrame()
 {
+    // Start a fresh UI command buffer for this frame.
     g_frameTexts.clear();
     g_frameButtons.clear();
     g_frameLabels.clear();
@@ -73,6 +75,7 @@ void uiBeginFrame()
 
 void uiEndFrameClicks()
 {
+    // Drop stale click if targeted button no longer exists this frame.
     if (g_pendingClickId < 0)
     {
         return;
@@ -106,6 +109,7 @@ bool drawButton(float nx, float ny, float nw, float nh, const char *label,
                 const Color4 &textColor, const Color4 &bgColor,
                 float borderThickness, const Color4 &borderColor)
 {
+    // Register button draw command and resolve deferred click hit by id.
     UIButton b{};
     b.nx = nx;
     b.ny = ny;
@@ -161,6 +165,7 @@ void uiOnMouseClick(int x, int y, int button, int state)
         return;
     }
 
+    // Hit-test against previous rendered frame's buttons.
     for (int i = static_cast<int>(g_lastButtons.size()) - 1; i >= 0; --i)
     {
         const UIButton &b = g_lastButtons[static_cast<size_t>(i)];
@@ -183,6 +188,7 @@ void uiRenderOverlay(int windowWidth, int windowHeight)
         return;
     }
 
+    // Render 2D overlay independently from 3D scene depth/texture state.
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_TEXTURE_2D);
@@ -271,5 +277,6 @@ void uiRenderOverlay(int windowWidth, int windowHeight)
 
     glPopAttrib();
 
+    // Keep buttons for next click hit-test pass.
     g_lastButtons = g_frameButtons;
 }

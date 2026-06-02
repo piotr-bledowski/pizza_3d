@@ -17,6 +17,7 @@ static std::vector<SceneObject> g_objects;
 namespace {
 constexpr float PI = 3.14159265358979323846f;
 
+// Raycasts cursor to pizza top plane and returns hovered slice index.
 int computeHoveredSlice(const Cylinder& pizza, int mouseX, int mouseY, int winW, int winH)
 {
     if (pizza.sliceCount <= 1 || winW <= 0 || winH <= 0)
@@ -103,7 +104,7 @@ void initGL()
 
     glMatrixMode(GL_MODELVIEW);
 
-    // Initialize textures
+    // Initialize all textures once at startup.
     TextureManager::initPizzaTexture();
     TextureManager::initSauceTexture();
     TextureManager::initPepperoniTexture();
@@ -126,13 +127,21 @@ int getHoveredSlice()
 
 void renderScene()
 {
+    // --- 3D prep ----------------------------------------------------------
+    // Camera movement/orientation are updated every rendered frame.
     updateCamera();
 
+    // Clear buffers and reset world->view transform.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
+    // Apply camera view transform (gluLookAt).
     applyCameraView();
 
+    // --- Hover slice detection (UI mode only) -----------------------------
+    // In UI mode we convert the mouse position to a pizza-slice index
+    // so slice clicks can toggle "pulled out" animation.
+    // In UI mode, mouse cursor can point to slices for highlight/click actions.
     if (getControlMode() == ControlMode::UI)
     {
         int mx = 0;
@@ -154,7 +163,9 @@ void renderScene()
         s_hoveredSlice = -1;
     }
 
-    // Render all objects
+    // --- Draw loop --------------------------------------------------------
+    // Each object is drawn with its position/rotation, and in baked mode
+    // we may swap to a pre-baked substitute mesh via `bakeSubstitute()`.
     for (const auto &obj : g_objects)
     {
         if (!obj.mesh)
@@ -178,6 +189,7 @@ void renderScene()
 
         if (auto* c = dynamic_cast<Cylinder*>(drawMesh))
         {
+            // Hover highlight: only cylinders/sauces know how to interpret slices.
             c->hoveredSlice = (c->sliceCount > 1) ? s_hoveredSlice : -1;
         }
         if (auto* s = dynamic_cast<Sauce*>(drawMesh))
@@ -189,10 +201,13 @@ void renderScene()
         glPopMatrix();
     }
 
+    // --- 2D overlay -------------------------------------------------------
+    // Draw buttons/labels on top of the 3D scene, then present frame.
     int winW = glutGet(GLUT_WINDOW_WIDTH);
     int winH = glutGet(GLUT_WINDOW_HEIGHT);
     uiRenderOverlay(winW, winH);
 
+    // Present + ensure we keep animating (slice animation depends on tickSliceAnimation).
     glutSwapBuffers();
     glutPostRedisplay();
 }
